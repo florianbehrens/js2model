@@ -1,12 +1,15 @@
 {
-   "$schema": "http://json-schema.org/draft-04/schema#",
-   "title": "address",
-   "type": "object",
-   "properties": {
-      "street": { "type": "string" },
-      "city": { "type": "string" },
-      "county": { "type": "string" },
-      "state": { "type": "string" },
-      "zip": { "type": "string" }
-   }
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "address",
+    "type": "object",
+    "properties": {
+        "street": { "type": "string" },
+        "city": { "type": "string" },
+        "county": { "type": "string" },
+        "state": { "type": "string" },
+        "zip": { "type": "string" },
+        "location": {
+            "enum": ["home", "work"]
+        }
+    }
 }

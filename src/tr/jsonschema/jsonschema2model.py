@@ -174,6 +174,10 @@ class ClassDef(object):
 
 class EnumDef(object):
     def __init__(self):
+        # Class name sans prefix/suffix
+        self.plain_name = None
+
+        # Class name
         self.name = None
         self.type = 'integer'
         self.values = []
@@ -707,9 +711,8 @@ class JsonSchema2Model(object):
         elif JsonSchemaKeywords.ENUM in schema_object:
 
             enum_def = EnumDef()
-            enum_def.name = self.mk_class_name(
-                schema_object[JsonSchemaKeywords.TYPENAME] if JsonSchemaKeywords.TYPENAME in schema_object else scope[
-                    -1])
+            enum_def.plain_name = schema_object[JsonSchemaKeywords.TYPENAME] if JsonSchemaKeywords.TYPENAME in schema_object else scope[-1]
+            enum_def.name = self.mk_class_name(enum_def.plain_name)
 
             # TODO: should I check to see if the enum is already in the models dict?
 
