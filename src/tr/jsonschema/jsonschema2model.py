@@ -441,12 +441,12 @@ class JsonSchema2Model(object):
                 print(exceptions.text_error_template().render())
 
     def copy_dependencies(self):
-        support_path = os.path.join(os.path.dirname(__file__), 'templates.' + self.lang, 'dependencies')
+        support_path = os.path.join(os.path.dirname(__file__), 'templates_' + self.lang, 'dependencies')
         if os.path.exists(support_path):
             self.copy_files(support_path, os.path.join(self.outdir, 'dependencies'))
 
     def copy_static_files(self):
-        support_path = os.path.join(os.path.dirname(__file__), 'templates.' + self.lang, 'static')
+        support_path = os.path.join(os.path.dirname(__file__), 'templates_' + self.lang, 'static')
         if os.path.exists(support_path):
             self.copy_files(support_path, self.outdir)
 
