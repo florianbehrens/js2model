@@ -18,7 +18,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-</%doc>
+</%doc>\
 <%doc>
 Utility functions
 </%doc>\
@@ -34,7 +34,7 @@ def firstupper(value):
 def inst_name(value):
 ##    return 'm' + value[0].upper() + value[1:]
     return normalize_prop_name(value)
-%>
+%>\
 <%
 def normalize_class_name(value):
 ##    return 'm' + value[0].upper() + value[1:]
@@ -76,7 +76,7 @@ Maps for mapping JSON types to Obj C types.
 %>\
 <%doc>
 Make sure property names are valid per C++ rules.
-</%doc>
+</%doc>\
 <%!
     def normalize_prop_name(propName):
         #return "id_" if propName == "id" else  propName
@@ -105,7 +105,7 @@ def inst_name(value):
 ##%>
 <%doc>
 Convert a JSON type to an Objective C type.
-</%doc>
+</%doc>\
 <%!
     def convertType(variableDef, usePrimitives=False):
 

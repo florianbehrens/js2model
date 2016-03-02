@@ -279,7 +279,7 @@ class TemplateManager(object):
 
         self.lang_conventions = {
             'objc': LanguageConventions(),
-            'cpp': LanguageConventions(cap_class_name=False, use_prefix=False, type_suffix='_t'),
+            'cpp': LanguageConventions(cap_class_name=True, use_prefix=False),
             'py': LanguageConventions(use_prefix=False, ivar_name_convention=LanguageConventions.NAME_UNDERBAR),
         }
 
