@@ -23,6 +23,7 @@
 from __future__ import print_function, nested_scopes, generators, division, absolute_import, with_statement, \
     unicode_literals
 
+import collections
 import glob
 import os
 import datetime
@@ -854,7 +855,7 @@ class JsonSchema2Model(object):
                 # root_schema = json.load(jsonFile)
                 # base_uri = 'file://' + os.path.split(os.path.realpath(f))[0]
                 base_uri = 'file://' + os.path.realpath(fname)
-                root_schema = jsonref.load(jsonFile, base_uri=base_uri, jsonschema=True, loader=loader)
+                root_schema = jsonref.load(jsonFile, base_uri=base_uri, jsonschema=True, loader=loader, object_pairs_hook=collections.OrderedDict)
 
                 if self.validate:
                     # TODO: Add exception handling
