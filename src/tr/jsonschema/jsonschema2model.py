@@ -445,10 +445,13 @@ class JsonSchema2Model(object):
 
             try:
                 self.verbose_output("Writing %s" % outfile_name)
-                f.write(template.render(classDef=class_def, import_files=self.import_files,
+                f.write(template.render(classDef=class_def,
+                                        import_files=self.import_files,
                                         namespace=self.namespace,
                                         include_additional_properties=self.include_additional_properties,
-                                        timestamp=str(datetime.date.today()), file_name=src_file_name,
+                                        timestamp=str(datetime.date.today()),
+                                        year=int(datetime.date.today().year),
+                                        file_name=src_file_name,
                                         skip_deserialization=self.skip_deserialization))
             except:
                 print(exceptions.text_error_template().render())
@@ -466,9 +469,12 @@ class JsonSchema2Model(object):
 
             try:
                 self.verbose_output("Writing %s" % outfile_name)
-                f.write(decl_template.render(enumDef=enum_def, import_files=self.import_files,
+                f.write(decl_template.render(enumDef=enum_def,
+                                             import_files=self.import_files,
                                              namespace=self.namespace,
-                                             timestamp=str(datetime.date.today()), file_name=src_file_name,
+                                             timestamp=str(datetime.date.today()),
+                                             year=int(datetime.date.today().year),
+                                             file_name=src_file_name,
                                              include_additional_properties=self.include_additional_properties))
             except:
                 print(exceptions.text_error_template().render())
@@ -490,7 +496,9 @@ class JsonSchema2Model(object):
         with open(outfile_name, 'w') as f:
             try:
                 self.verbose_output("Writing %s" % outfile_name)
-                f.write(decl_template.render(models=models, timestamp=str(datetime.date.today()),
+                f.write(decl_template.render(models=models,
+                                             timestamp=str(datetime.date.today()),
+                                             year=int(datetime.date.today().year),
                                              namespace=self.namespace,
                                              include_additional_properties=self.include_additional_properties,
                                              file_name=src_file_name))

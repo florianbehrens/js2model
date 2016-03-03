@@ -22,9 +22,11 @@ THE SOFTWARE.
 <%inherit file="base.mako" />
 <%namespace name="base" file="base.mako" />
 <%block name='code'>
+#pragma once
+
 enum class ${enumDef.name} {
 % for v in enumDef.values:
     ${ v },
 % endfor
 };
-</%block>
+</%block>\

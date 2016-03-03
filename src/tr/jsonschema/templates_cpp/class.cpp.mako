@@ -24,11 +24,9 @@ THE SOFTWARE.
 <%block name="code">
 #include "${classDef.header_file}"
 #include <vector>
-#include <fstream>
-#include <sstream>
 
 using namespace std;
-using namespace rapidjson;
+using namespace json11;
 
 <%
 class_name = classDef.name
@@ -36,17 +34,17 @@ class_name = classDef.name
 namespace ${namespace} {
 namespace models {
 
-${class_name}::${class_name}(const rapidjson::Value &json_value) {
+${class_name}::${class_name}(const Json &json) {
 
-    assert(json_value.IsObject());
+    assert(json.is_object());
 
     % for v in classDef.variable_defs:
 <%
     var_iter = v.name + '_iter'
     inst_name = base.attr.inst_name(v.name)
 %>\
-    auto ${var_iter} = json_value.FindMember("${v.json_name}");
-    if ( ${var_iter} != json_value.MemberEnd() ) {
+    auto ${var_iter} = json.FindMember("${v.json_name}");
+    if ( ${var_iter} != json.MemberEnd() ) {
 
         %if v.isArray:
         for( auto array_item = ${var_iter}->value.Begin(); array_item != ${var_iter}->value.End(); array_item++  ) {
