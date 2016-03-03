@@ -30,6 +30,7 @@ import re
 import jsonref
 import logging
 import pkg_resources
+import pprint
 from mako.lookup import TemplateLookup
 from mako import exceptions
 
@@ -142,6 +143,21 @@ class ClassDef(object):
         self.header_file = None
         self.impl_file = None
 
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'variable_defs': [x.to_dict() for x in self.variable_defs],
+            'superClasses': self.superClasses,
+            'interfaces': self.interfaces,
+            'package': self.package,
+            'custom': self.custom,
+            'header_file': self.header_file,
+            'impl_file': self.impl_file
+            }
+
+    def __repr__(self):
+        return pprint.pformat(self.to_dict())
+
     @property
     def dependencies(self):
         dependencies = set()
@@ -182,6 +198,16 @@ class EnumDef(object):
         self.type = 'integer'
         self.values = []
 
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'type': self.type,
+            'values': self.values,
+            }
+
+    def __repr__(self):
+        return pprint.pformat(self.to_dict())
+
 
 class VariableDef(object):
     ACCESS_PUBLIC = "public"
@@ -215,6 +241,37 @@ class VariableDef(object):
         self.title = None
         self.description = None
         self.format = None
+
+    def to_dict(self):
+        base_dict = {
+            'schema_type': self.schema_type,
+            'type': self.type,
+            'model_type': self.model_type,
+            'name': self.name,
+            'json_name': self.json_name,
+            'header_file': self.header_file,
+            'visibility': self.visibility,
+            'storage': self.storage,
+            'default': self.default,
+            'model_default': self.model_default,
+            'isArray': self.isArray,
+            'isEnum': self.isEnum,
+            'isRequired': self.isRequired,
+            'uniqueItems': self.uniqueItems,
+            'maxItems': self.maxItems,
+            'minItems': self.minItems,
+            'maximum': self.maximum,
+            'minimum': self.minimum,
+            'maxLength': self.maxLength,
+            'minLength': self.minLength,
+            'title': self.title,
+            'description': self.description,
+            'format': self.format,
+        }
+        return {k: v for k, v in base_dict.items() if v != None}
+
+    def __repr__(self):
+        return pprint.pformat(self.to_dict())
 
     def effective_schema_type(self):
         if isinstance(self.schema_type, list) and \
