@@ -38,19 +38,52 @@ ${class_name}::${class_name}(const Json &json) {
 
     assert(json.is_object());
 
-    % for v in classDef.variable_defs:
+% for v in classDef.variable_defs:
 <%
-    var_iter = v.name + '_iter'
-    inst_name = base.attr.inst_name(v.name)
+inst_name = "this->" + base.attr.inst_name(v.name)
+temp_name = v.name + "_temp"
 %>\
-    auto ${var_iter} = json.FindMember("${v.json_name}");
-    if ( ${var_iter} != json.MemberEnd() ) {
+<%def name="emit_initializer(value, member_name, local_name)">
+    % if value.schema_type == 'string':
+        if (${temp_name}->value.is_null()) {
+        ${inst_name}.clear();
+        }
+        else {
+        assert(${temp_name}->value.IsString());
+        ${inst_name} = ${temp_name}->value.GetString();
+        }
+    %elif value.schema_type == 'integer':
+        if (!${temp_name}->value.is_null()) {
+        assert(${temp_name}->value.IsInt());
+        ${inst_name} = ${temp_name}->value.GetInt();
+        }
+    %elif value.schema_type == 'boolean':
+        if (!${temp_name}->value.is_null()) {
+        assert(${temp_name}->value.IsBool());
+        ${inst_name} = ${temp_name}->value.GetBool();
+        }
+    %elif value.schema_type == 'object':
+        if (!${temp_name}->value.is_null()) {
+        assert(${temp_name}->value.IsObject());
+        ${inst_name} = ${value.type}(${temp_name}->value);
+        }
+    %endif
+</%def>
+
+    auto ${temp_name} = json["${v.json_name}"];
+% if v.isRequired:
+    // required
+    assert(!${temp_name}.is_null());
+% else:
+    // optional
+% endif
+    if ( !${temp_name}.is_null() ) {
 
         %if v.isArray:
-        for( auto array_item = ${var_iter}->value.Begin(); array_item != ${var_iter}->value.End(); array_item++  ) {
+        for( auto array_item = ${temp_name}->value.Begin(); array_item != ${temp_name}->value.End(); array_item++  ) {
 
             % if v.schema_type == 'string':
-            if (!array_item->IsNull()) {
+            if (!array_item->is_null()) {
                 assert(array_item->IsString());
                 ${inst_name}.push_back(array_item->GetString());
             }
@@ -72,27 +105,27 @@ ${class_name}::${class_name}(const Json &json) {
         }
         %else:
         % if v.schema_type == 'string':
-        if (${var_iter}->value.IsNull()) {
+        if (${temp_name}->value.is_null()) {
             ${inst_name}.clear();
         }
         else {
-            assert(${var_iter}->value.IsString());
-            ${inst_name} = ${var_iter}->value.GetString();
+            assert(${temp_name}->value.IsString());
+            ${inst_name} = ${temp_name}->value.GetString();
         }
         %elif v.schema_type == 'integer':
-        if (!${var_iter}->value.IsNull()) {
-            assert(${var_iter}->value.IsInt());
-            ${inst_name} = ${var_iter}->value.GetInt();
+        if (!${temp_name}->value.is_null()) {
+            assert(${temp_name}->value.IsInt());
+            ${inst_name} = ${temp_name}->value.GetInt();
         }
         %elif v.schema_type == 'boolean':
-        if (!${var_iter}->value.IsNull()) {
-            assert(${var_iter}->value.IsBool());
-            ${inst_name} = ${var_iter}->value.GetBool();
+        if (!${temp_name}->value.is_null()) {
+            assert(${temp_name}->value.IsBool());
+            ${inst_name} = ${temp_name}->value.GetBool();
         }
         %elif v.schema_type == 'object':
-        if (!${var_iter}->value.IsNull()) {
-            assert(${var_iter}->value.IsObject());
-            ${inst_name} = ${v.type}(${var_iter}->value);
+        if (!${temp_name}->value.is_null()) {
+            assert(${temp_name}->value.IsObject());
+            ${inst_name} = ${v.type}(${temp_name}->value);
         }
         %endif
         %endif
