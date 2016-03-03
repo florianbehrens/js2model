@@ -421,7 +421,9 @@ class JsonSchema2Model(object):
         conventions = self.template_manager.get_conventions(self.lang)
 
         for classDef in self.models.values():
-
+            # from pprint import pprint
+            # pprint(classDef)
+            # import pdb; pdb.set_trace()
             if template_files.header_template:
                 self.render_model_to_file(classDef, classDef.header_file, template_files.header_template)
 
