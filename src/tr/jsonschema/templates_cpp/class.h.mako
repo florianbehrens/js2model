@@ -21,9 +21,9 @@ THE SOFTWARE.
 </%doc>
 <%inherit file="base.mako" />
 <%namespace name="base" file="base.mako" />
-<%def name='propertyDecl(variableDef, usePrimitives=False)'>\
+<%def name='propertyDecl(variableDef, usePrimitives=False, useOptionals=True)'>\
     <%
-    (varType, isRef, itemsType) = base.attr.convertType(variableDef, usePrimitives)
+    (varType, isRef, itemsType) = base.attr.convertType(variableDef, usePrimitives, useOptionals)
     %>\
 ${varType} ${base.attr.inst_name(variableDef.name)};\
 </%def>\
@@ -34,6 +34,8 @@ ${varType} ${base.attr.inst_name(variableDef.name)};\
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "Core/Optional.hpp"
 % if classDef.dependencies:
 % for dep in classDef.dependencies:
 #include "${dep}"

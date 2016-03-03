@@ -107,7 +107,7 @@ def inst_name(value):
 Convert a JSON type to an Objective C type.
 </%doc>\
 <%!
-    def convertType(variableDef, usePrimitives=False):
+    def convertType(variableDef, usePrimitives=False, useOptionals=False):
 
         if usePrimitives:
             if variableDef.type in primitivesTypeMap:
@@ -126,6 +126,10 @@ Convert a JSON type to an Objective C type.
         else:
              varType = cppType
              itemType = None
+
+        if useOptionals and not variableDef.isRequired:
+             varType = "fiftythree::core::optional<%s>" % varType
+             itemType = "fiftythree::core::optional<%s>" % itemType
 
         return (varType, isRef, itemType)
 %>\

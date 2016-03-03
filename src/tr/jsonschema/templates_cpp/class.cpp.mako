@@ -68,7 +68,7 @@ temp_name = v.name + "_temp"
         ${inst_name} = ${value.type}(${temp_name}->value);
         }
     %endif
-</%def>
+</%def>\
 
     auto ${temp_name} = json["${v.json_name}"];
 % if v.isRequired:
