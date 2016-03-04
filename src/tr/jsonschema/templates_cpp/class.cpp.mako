@@ -43,92 +43,57 @@ ${class_name}::${class_name}(const Json &json) {
 inst_name = "this->" + base.attr.inst_name(v.name)
 temp_name = v.name + "_temp"
 %>\
-<%def name="emit_initializer(value, member_name, local_name)">
-    % if value.schema_type == 'string':
-        if (${temp_name}->value.is_null()) {
-        ${inst_name}.clear();
-        }
-        else {
-        assert(${temp_name}->value.IsString());
-        ${inst_name} = ${temp_name}->value.GetString();
-        }
-    %elif value.schema_type == 'integer':
-        if (!${temp_name}->value.is_null()) {
-        assert(${temp_name}->value.IsInt());
-        ${inst_name} = ${temp_name}->value.GetInt();
-        }
-    %elif value.schema_type == 'boolean':
-        if (!${temp_name}->value.is_null()) {
-        assert(${temp_name}->value.IsBool());
-        ${inst_name} = ${temp_name}->value.GetBool();
-        }
-    %elif value.schema_type == 'object':
-        if (!${temp_name}->value.is_null()) {
-        assert(${temp_name}->value.IsObject());
-        ${inst_name} = ${value.type}(${temp_name}->value);
-        }
-    %endif
-</%def>\
-
     auto ${temp_name} = json["${v.json_name}"];
 % if v.isRequired:
-    // required
-    assert(!${temp_name}.is_null());
+    {
+        // required
+        assert(!${temp_name}.is_null());
 % else:
-    // optional
-% endif
     if ( !${temp_name}.is_null() ) {
-
-        %if v.isArray:
-        for( auto array_item = ${temp_name}->value.Begin(); array_item != ${temp_name}->value.End(); array_item++  ) {
-
+        // optional
+% endif
+        % if v.isArray:
+        assert(${temp_name}.is_array());
+        for( const auto array_item : ${temp_name}.array_items() ) {
             % if v.schema_type == 'string':
-            if (!array_item->is_null()) {
-                assert(array_item->IsString());
-                ${inst_name}.push_back(array_item->GetString());
+            if (!array_item.is_null()) {
+                assert(array_item.is_string());
+                ${inst_name}.emplace_back(array_item.string_value());
             }
-            %elif v.schema_type == 'integer':
-            assert(array_item->IsInt());
-            ${inst_name}.push_back(array_item->GetInt());
-            %elif v.schema_type == 'boolean':
-            assert(array_item->IsBool());
-            ${inst_name}.push_back(array_item->GetBool());
-            %elif v.schema_type == 'object':
-            assert(array_item->IsObject());
-            ${inst_name}.push_back(${v.type}(*array_item));
-            %elif v.schema_type == 'array':
+            % elif v.schema_type == 'integer':
+            assert(array_item.is_number());
+            ${inst_name}.emplace_back(int(array_item.number_value()));
+            % elif v.schema_type == 'boolean':
+            assert(array_item.is_bool());
+            ${inst_name}.emplace_back(array_item.bool_value());
+            % elif v.schema_type == 'object':
+            assert(array_item.is_object());
+            ${inst_name}.emplace_back(${v.type}(array_item));
+            % elif v.schema_type == 'array':
             ## TODO: probably need to recursively handle arrays of arrays
-            assert(array_item->IsArray());
+            assert(array_item.is_array());
             vector<${v.type}> item_array;
-            ${inst_name}.push_back(${v.type}(item_array));
-            %endif
+            ${inst_name}.emplace_back(${v.type}(item_array));
+            % endif
         }
-        %else:
+        % else:
         % if v.schema_type == 'string':
-        if (${temp_name}->value.is_null()) {
-            ${inst_name}.clear();
-        }
-        else {
-            assert(${temp_name}->value.IsString());
-            ${inst_name} = ${temp_name}->value.GetString();
-        }
-        %elif v.schema_type == 'integer':
-        if (!${temp_name}->value.is_null()) {
-            assert(${temp_name}->value.IsInt());
-            ${inst_name} = ${temp_name}->value.GetInt();
-        }
-        %elif v.schema_type == 'boolean':
-        if (!${temp_name}->value.is_null()) {
-            assert(${temp_name}->value.IsBool());
-            ${inst_name} = ${temp_name}->value.GetBool();
-        }
-        %elif v.schema_type == 'object':
-        if (!${temp_name}->value.is_null()) {
-            assert(${temp_name}->value.IsObject());
-            ${inst_name} = ${v.type}(${temp_name}->value);
-        }
-        %endif
-        %endif
+        assert(${temp_name}.is_string());
+        ${inst_name} = ${temp_name}.string_value();
+        % elif v.schema_type == 'integer':
+        assert(${temp_name}.is_number());
+        ${inst_name} = int(${temp_name}.number_value());
+        % elif v.schema_type == 'number':
+        assert(${temp_name}.is_number());
+        ${inst_name} = ${temp_name}.number_value();
+        % elif v.schema_type == 'boolean':
+        assert(${temp_name}.is_bool());
+        ${inst_name} = ${temp_name}.bool_value();
+        % elif v.schema_type == 'object':
+        assert(${temp_name}.is_object());
+        ${inst_name} = ${v.type}(${temp_name}->object_value);
+        % endif
+        % endif
     }
 
     % endfor
@@ -143,37 +108,37 @@ string to_string(const ${class_name} &val, std::string indent/* = "" */, std::st
 <%
     inst_name = base.attr.inst_name(v.name)
 %>\
-    %if v.isArray:
+    % if v.isArray:
     os << indent << pretty_print << "\"${v.name}\": [";
     for( auto &array_item : val.${inst_name} ) {
 
         % if v.schema_type == 'string':
         os << "\"" << array_item << "\",";
-        %elif v.schema_type == 'integer':
+        % elif v.schema_type == 'integer':
         os << array_item << ",";
-        %elif v.schema_type == 'boolean':
+        % elif v.schema_type == 'boolean':
         os << (array_item ? "true" : "false") << ",";
-        %elif v.schema_type == 'object':
+        % elif v.schema_type == 'object':
         os << endl << to_string(array_item, indent + pretty_print + pretty_print, pretty_print) << "," << endl;
-##        %elif v.schema_type == 'array':
+##        % elif v.schema_type == 'array':
 ##        ## TODO: probably need to recursively handle arrays of arrays
 ##        assert(array_item->IsArray());
 ##        vector<${v.type}> item_array;
 ##        ${inst_name}.push_back(${v.type}(item_array));
-        %endif
+        % endif
     }
     os << indent << pretty_print << "]," << endl;
-    %else:
+    % else:
     % if v.schema_type == 'string':
     os << indent << pretty_print << "\"${v.name}\": \"" << val.${inst_name} << "\"," << endl;
-    %elif v.schema_type == 'integer':
+    % elif v.schema_type == 'integer':
     os << indent << pretty_print << "\"${v.name}\": " << val.${inst_name} << "," << endl;
-    %elif v.schema_type == 'boolean':
+    % elif v.schema_type == 'boolean':
     os << indent << pretty_print << "\"${v.name}\": " << (val.${inst_name} ? "true" : "false") << "," << endl;
-    %elif v.schema_type == 'object':
+    % elif v.schema_type == 'object':
     os << indent << pretty_print << "\"${v.name}\": " << to_string(val.${inst_name}, indent + pretty_print, pretty_print) << "," << endl;
-    %endif
-    %endif
+    % endif
+    % endif
     % endfor
     os << indent << "}";
 
