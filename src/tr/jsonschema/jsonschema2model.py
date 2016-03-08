@@ -147,6 +147,7 @@ class ClassDef(object):
     def to_dict(self):
         return {
             'name': self.name,
+            'plain_name': self.plain_name,
             'variable_defs': [x.to_dict() for x in self.variable_defs],
             'superClasses': self.superClasses,
             'interfaces': self.interfaces,
@@ -198,12 +199,15 @@ class EnumDef(object):
         self.name = None
         self.type = 'integer'
         self.values = []
+        self.header_file = None
 
     def to_dict(self):
         return {
             'name': self.name,
+            'plain_name': self.plain_name,
             'type': self.type,
             'values': self.values,
+            'header_file': self.header_file
             }
 
     def __repr__(self):
@@ -461,8 +465,7 @@ class JsonSchema2Model(object):
 
     def render_enum_to_file(self, enum_def, templ_name):
 
-        # remove '.jinja', then use extension from the template name
-        src_file_name = self.mk_source_file_name(enum_def, templ_name)
+        src_file_name = enum_def.header_file
         # src_file_name = enum_def.name + os.path.splitext(templ_name.replace('.mako', ''))[1]
         outfile_name = os.path.join(self.outdir, src_file_name)
 
@@ -781,6 +784,10 @@ class JsonSchema2Model(object):
             enum_def.plain_name = schema_object[JsonSchemaKeywords.TYPENAME] if JsonSchemaKeywords.TYPENAME in schema_object else scope[-1]
             enum_def.name = self.mk_class_name(enum_def.plain_name)
 
+            # Derive the enum source file name from the corresponding template name
+            template_files = self.template_manager.get_template_files(self.lang)
+            enum_def.header_file = self.mk_source_file_name(enum_def,
+                                                            template_files.enum_template)
             # TODO: should I check to see if the enum is already in the models dict?
 
             enum_def.type = 'int'
@@ -790,6 +797,7 @@ class JsonSchema2Model(object):
 
             var_def.type = enum_def.name
             var_def.isEnum = True
+            var_def.header_file = enum_def.header_file
         else:
             logger.warning("Unknown schema type in %s", schema_object)
 
