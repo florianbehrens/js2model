@@ -7,7 +7,7 @@
         "city": "Seattle",
         "state": "WA",
         "zip": 98117,
-        "location": "Home",
+        "location": "home",
         "description" : {
             "short_description": "Home Sweet Home"
         },
@@ -30,7 +30,7 @@
         "county": "King",
         "state": "WA",
         "zip": 98117,
-        "location": "Work",
+        "location": "work",
         "latitude": 22.5,
         "longitude": 46.7777,
         "description" : {
@@ -41,15 +41,18 @@
         [
             {
                 "number": "(206)555-1212",
-                "phone_location": "work"
+                "location": "work"
             },
             {
                 "number": "(206)555-1212",
-                "phone_location": "home"
+                "location": "home"
             },
             {
                 "number": "(206)555-1212",
-                "phone_location": "mobile"
+                "location": "mobile"
+            },
+            {
+                "number": "(206)555-1212"
             }
         ]
     }

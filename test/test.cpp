@@ -35,7 +35,7 @@ TEST_CASE( "JSON data can be loaded into classes" ) {
         auto q = Quickstart(item);
         REQUIRE(q.street == "150 Shady Lane");
         REQUIRE(!q.latitude.is_initialized());
-        REQUIRE(q.location == Location::Home);
+        REQUIRE(q.location == Quickstart::Location::Home);
         REQUIRE(q.description.shortDescription == "Home Sweet Home");
         REQUIRE(!q.description.longDescription.is_initialized());
     }
@@ -51,16 +51,18 @@ TEST_CASE( "JSON data can be loaded into classes" ) {
         REQUIRE(q.street == "150 Shady Lane");
         REQUIRE(q.latitude.get() == Approx(22.5));
         REQUIRE(q.longitude.get() == Approx(46.7777));
-        REQUIRE(q.location == Location::Work);
+        REQUIRE(q.location == Quickstart::Location::Work);
         REQUIRE(q.description.shortDescription == "Home Sweet Home");
         REQUIRE(q.description.longDescription.get() == "a little house");
-        REQUIRE(q.phoneNumbers.size() == 3);
+        REQUIRE(q.phoneNumbers.size() == 4);
         REQUIRE(q.phoneNumbers[0].number == "(206)555-1212");
-        REQUIRE(q.phoneNumbers[0].phoneLocation == PhoneLocation::work);
+        REQUIRE(q.phoneNumbers[0].location.get() == PhoneNumbers::Location::Work);
         REQUIRE(q.phoneNumbers[1].number == "(206)555-1212");
-        REQUIRE(q.phoneNumbers[1].phoneLocation == PhoneLocation::home);
+        REQUIRE(q.phoneNumbers[1].location.get() == PhoneNumbers::Location::Home);
         REQUIRE(q.phoneNumbers[2].number == "(206)555-1212");
-        REQUIRE(q.phoneNumbers[2].phoneLocation == PhoneLocation::mobile);
+        REQUIRE(q.phoneNumbers[2].location.get() == PhoneNumbers::Location::Mobile);
+        REQUIRE(q.phoneNumbers[3].number == "(206)555-1212");
+        REQUIRE(!q.phoneNumbers[3].location.is_initialized());
     }
 
 }

@@ -36,7 +36,7 @@
             "type": "integer"
         },
         "location": {
-            "enum": ["Home", "Work"]
+            "enum": ["home", "work"]
         },
         "latitude": {
             "type": "number",
@@ -58,7 +58,7 @@
                         "type": "string",
                         "pattern": "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$"
                     },
-                    "phone_location": {
+                    "location": {
                         "enum": ["home", "work", "mobile"]
                     }
                 }

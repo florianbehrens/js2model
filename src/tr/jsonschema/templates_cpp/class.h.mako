@@ -22,10 +22,19 @@ THE SOFTWARE.
 <%inherit file="base.mako" />
 <%namespace name="base" file="base.mako" />
 <%def name='propertyDecl(variableDef, usePrimitives=False, useOptionals=True)'>\
-    <%
-    (varType, isRef, itemsType) = base.attr.convertType(variableDef, usePrimitives, useOptionals)
-    %>\
-${varType} ${base.attr.inst_name(variableDef.name)};\
+<%
+(varType, isRef, itemsType) = base.attr.convertType(variableDef, usePrimitives, useOptionals)
+%>\
+    ${varType} ${base.attr.inst_name(variableDef.name)};\
+</%def>\
+<%def name='enumDecl(enumDef)'>\
+    enum class ${enumDef.name} {
+% for v in enumDef.values:
+        ${ v.title() },
+% endfor
+    };
+    static std::string ${enumDef.plain_name}_to_string(const ${enumDef.name} &val);
+    static ${enumDef.name} string_to_${enumDef.plain_name}(const std::string &key);
 </%def>\
 <%block name="code">
 #pragma once
@@ -61,6 +70,9 @@ superClass = classDef.superClasses[0] if len(classDef.superClasses) else None
 class ${class_name} ${(': protected ' + superClass) if superClass else ''}
 {
 public:
+% for e in [x.enum_def for x in classDef.variable_defs if x.enum_def]:
+${enumDecl(e)}
+% endfor
 % for v in classDef.variable_defs:
 ${propertyDecl(v)}
 % endfor

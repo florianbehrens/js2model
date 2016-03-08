@@ -2,7 +2,7 @@ High
 
 [x] `to_json` not done yet
 [x] Enum initialization from JSON: totally wrong
-[ ] Enums nested in classes, or placed in root include file, but not in separate includes
+[x] Enums nested in classes, or placed in root include file, but not in separate includes
 [ ] Implement `is_valid`
 [ ] Rationalize required vs. optional arrays
 [x] Support "required" array

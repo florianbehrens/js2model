@@ -82,7 +82,7 @@ temp_name = v.name + "Temp"
         % if v.schema_type == 'string':
         assert(${temp_name}.is_string());
         % if v.isEnum:
-        ${inst_name} = ${v.type.lower()}_from_string(${temp_name}.string_value());
+        ${inst_name} = string_to_${v.json_name}(${temp_name}.string_value());
         % else:
         ${inst_name} = ${temp_name}.string_value();
         % endif
@@ -117,21 +117,55 @@ Json ${class_name}::to_json() const {
 <%
     inst_name = "this->" + base.attr.inst_name(v.name)
 %>\
+<%def name='emit_assignment(var_def)'>\
+<%
+if var_def.isRequired:
+    value = inst_name
+else:
+    value = inst_name + ".get()"
+%>
+% if var_def.isArray:
+    object["${var_def.json_name}"] = Json(${value});
+% elif var_def.isEnum:
+    object["${var_def.json_name}"] = ${var_def.enum_def.plain_name}_to_string(${value});
+% else:
+    object["${var_def.json_name}"] = ${value};
+% endif
+</%def>\
 % if not v.isRequired and not v.isArray:
     if (${inst_name}.is_initialized()) {
-        object["${v.json_name}"] = ${inst_name}.get();
+        ${emit_assignment(v)}
     }
-% elif v.isArray:
-    object["${v.json_name}"] = Json(${inst_name});
-% elif v.isEnum:
-    object["${v.json_name}"] = to_string(${inst_name});
 % else:
-    object["${v.json_name}"] = ${inst_name};
+    ${emit_assignment(v)}
 % endif
 
 % endfor
     return Json(object);
 }
+
+% for enumDef in [x.enum_def for x in classDef.variable_defs if x.enum_def]:
+std::string ${class_name}::${enumDef.plain_name}_to_string(const ${class_name}::${enumDef.name} &val)
+{
+    switch (val) {
+    % for v in enumDef.values:
+    case ${enumDef.name}::${ v.title() }:
+        return "${v}";
+    % endfor
+    }
+}
+
+${class_name}::${enumDef.name} ${class_name}::string_to_${enumDef.plain_name}(const std::string &key)
+{
+    static const std::map<std::string, ${enumDef.name}> values = {
+        % for v in enumDef.values:
+        { "${v}", ${enumDef.name}::${v.title()} },
+        % endfor
+    };
+    // Throws std::out_of_range if an invalid string is passed
+    return values.at(key);
+}
+% endfor
 
 } // namespace models
 } // namespace ${namespace}

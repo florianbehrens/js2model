@@ -233,6 +233,7 @@ class VariableDef(object):
         self.storage = VariableDef.STORAGE_IVAR
         self.default = None
         self.model_default = None
+        self.enum_def = None
         self.isArray = False
         self.isEnum = False
         self.isRequired = False
@@ -435,9 +436,10 @@ class JsonSchema2Model(object):
             if template_files.impl_template:
                 self.render_model_to_file(classDef, classDef.impl_file, template_files.impl_template)
 
-        if template_files.enum_template:
-            for enumDef in self.enums.values():
-                self.render_enum_to_file(enumDef, template_files.enum_template)
+        # Currently rendering enums into classes. This can probably go away.
+        # if template_files.enum_template:
+        #     for enumDef in self.enums.values():
+        #         self.render_enum_to_file(enumDef, template_files.enum_template)
 
         for global_template in template_files.global_templates:
             self.render_global_template(self.models.values(), global_template)
@@ -797,7 +799,7 @@ class JsonSchema2Model(object):
 
             var_def.type = enum_def.name
             var_def.isEnum = True
-            var_def.header_file = enum_def.header_file
+            var_def.enum_def = enum_def
         else:
             logger.warning("Unknown schema type in %s", schema_object)
 
