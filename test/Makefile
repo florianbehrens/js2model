@@ -3,7 +3,7 @@
 # rules processing.
 include generated_code/generated_srcs.mk
 
-SOURCES= test.cpp $(GENERATED_SRCS) third_party/json11/json11.cpp
+SOURCES= *.cpp $(GENERATED_SRCS) third_party/json11/json11.cpp
 OBJDIR := generated_code/obj
 OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.cpp,%.o,$(SOURCES)))
 
