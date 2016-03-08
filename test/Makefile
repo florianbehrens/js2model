@@ -17,7 +17,7 @@ generated_code/test: $(OBJS)
 	cc $(CFLAGS) -lm -lc++ -o $@ $(OBJS)
 
 generated_code/generated_srcs.mk: jsonSchema/quickstart.schema.json
-	$(CURDIR)/../src/js2model -o generated_code -l cpp $<
+	$(CURDIR)/../src/js2model --namespace ft -o generated_code -l cpp $<
 	echo "GENERATED_SRCS=`echo generated_code/*.cpp`" > generated_code/generated_srcs.mk
 
 $(OBJDIR)/%.o : %.cpp

@@ -6,12 +6,11 @@
 
 #include "models.h"
 
-using namespace json11;
 using namespace boost;
+using namespace json11;
 using namespace std;
 
-// FIXME wrong namespace
-using namespace tr::models;
+using namespace ft::models;
 
 TEST_CASE( "JSON data can be loaded into classes" ) {
     ifstream data("jsonData/quickstart.data.json");
