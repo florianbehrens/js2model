@@ -19,11 +19,11 @@
             "required": true
         },
         "zip": {
-            "type": "string",
+            "type": "integer",
             "required": true
         },
         "location": {
-            "enum": ["home", "work"],
+            "enum": ["Home", "Work"],
             "required": true
         },
         "latitude": {

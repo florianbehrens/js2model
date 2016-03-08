@@ -30,12 +30,12 @@ ${varType} ${base.attr.inst_name(variableDef.name)};\
 <%block name="code">
 #pragma once
 
+#include <boost/optional.hpp>
 #include <json11/json11.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "Core/Optional.hpp"
 % if classDef.dependencies:
 % for dep in classDef.dependencies:
 #include "${dep}"
