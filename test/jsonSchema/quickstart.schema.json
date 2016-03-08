@@ -1,12 +1,71 @@
 {
-   "$schema": "http://json-schema.org/draft-04/schema#",
-   "title": "address",
-   "type": "object",
-   "properties": {
-      "street": { "type": "string" },
-      "city": { "type": "string" },
-      "county": { "type": "string" },
-      "state": { "type": "string" },
-      "zip": { "type": "string" }
-   }
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "address",
+    "type": "object",
+    "properties": {
+        "description": {
+            "type": "object",
+            "required": true,
+            "properties": {
+                "short_description": {
+                    "type": "string",
+                    "required": true
+                },
+                "long_description": {
+                    "type": "string"
+                }
+            }
+        },
+        "street": {
+            "type": "string",
+            "required": true
+        },
+        "city": {
+            "type": "string",
+            "required": true
+        },
+        "county": {
+            "type": "string"
+        },
+        "state": {
+            "type": "string",
+            "required": true
+        },
+        "zip": {
+            "type": "integer",
+            "required": true
+        },
+        "location": {
+            "enum": ["Home", "Work"],
+            "required": true
+        },
+        "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+        },
+        "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+        },
+        "phone_numbers": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "number": {
+                        "type": "string",
+                        "pattern": "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$",
+                        "required": true
+                    },
+                    "phone_location": {
+                        "enum": ["home", "work", "mobile"],
+                        "required": true
+                    }
+                }
+            }
+        }
+    }
 }
+

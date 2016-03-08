@@ -22,9 +22,34 @@ THE SOFTWARE.
 <%inherit file="base.mako" />
 <%namespace name="base" file="base.mako" />
 <%block name='code'>
-typedef NS_ENUM(NS_Integer, ${enumDef.name} ) {
+#pragma once
+
+#include <map>
+#include <string>
+
+enum class ${enumDef.name} {
 % for v in enumDef.values:
     ${ v },
 % endfor
 };
-</%block>
+
+inline std::string to_string(const ${enumDef.name} &val) {
+    switch (val) {
+% for v in enumDef.values:
+    case ${enumDef.name}::${ v }:
+        return "${v}";
+% endfor
+    }
+}
+
+inline ${enumDef.name} ${enumDef.name.lower()}_from_string(const std::string &key) {
+    static const std::map<std::string, ${enumDef.name}> values = {
+    % for v in enumDef.values:
+        { "${v}", ${enumDef.name}::${v} },
+    % endfor
+    };
+    // Throws std::out_of_range if an invalid string is passed
+    return values.at(key);
+}
+
+</%block>\

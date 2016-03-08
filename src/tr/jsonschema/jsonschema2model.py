@@ -23,6 +23,7 @@
 from __future__ import print_function, nested_scopes, generators, division, absolute_import, with_statement, \
     unicode_literals
 
+import collections
 import glob
 import os
 import datetime
@@ -30,6 +31,7 @@ import re
 import jsonref
 import logging
 import pkg_resources
+import pprint
 from mako.lookup import TemplateLookup
 from mako import exceptions
 
@@ -142,6 +144,21 @@ class ClassDef(object):
         self.header_file = None
         self.impl_file = None
 
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'variable_defs': [x.to_dict() for x in self.variable_defs],
+            'superClasses': self.superClasses,
+            'interfaces': self.interfaces,
+            'package': self.package,
+            'custom': self.custom,
+            'header_file': self.header_file,
+            'impl_file': self.impl_file
+            }
+
+    def __repr__(self):
+        return pprint.pformat(self.to_dict())
+
     @property
     def dependencies(self):
         dependencies = set()
@@ -174,9 +191,23 @@ class ClassDef(object):
 
 class EnumDef(object):
     def __init__(self):
+        # Class name sans prefix/suffix
+        self.plain_name = None
+
+        # Class name
         self.name = None
         self.type = 'integer'
         self.values = []
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'type': self.type,
+            'values': self.values,
+            }
+
+    def __repr__(self):
+        return pprint.pformat(self.to_dict())
 
 
 class VariableDef(object):
@@ -211,6 +242,37 @@ class VariableDef(object):
         self.title = None
         self.description = None
         self.format = None
+
+    def to_dict(self):
+        base_dict = {
+            'schema_type': self.schema_type,
+            'type': self.type,
+            'model_type': self.model_type,
+            'name': self.name,
+            'json_name': self.json_name,
+            'header_file': self.header_file,
+            'visibility': self.visibility,
+            'storage': self.storage,
+            'default': self.default,
+            'model_default': self.model_default,
+            'isArray': self.isArray,
+            'isEnum': self.isEnum,
+            'isRequired': self.isRequired,
+            'uniqueItems': self.uniqueItems,
+            'maxItems': self.maxItems,
+            'minItems': self.minItems,
+            'maximum': self.maximum,
+            'minimum': self.minimum,
+            'maxLength': self.maxLength,
+            'minLength': self.minLength,
+            'title': self.title,
+            'description': self.description,
+            'format': self.format,
+        }
+        return {k: v for k, v in base_dict.items() if v != None}
+
+    def __repr__(self):
+        return pprint.pformat(self.to_dict())
 
     def effective_schema_type(self):
         if isinstance(self.schema_type, list) and \
@@ -275,7 +337,7 @@ class TemplateManager(object):
 
         self.lang_conventions = {
             'objc': LanguageConventions(),
-            'cpp': LanguageConventions(cap_class_name=False, use_prefix=False, type_suffix='_t'),
+            'cpp': LanguageConventions(cap_class_name=True, use_prefix=False),
             'py': LanguageConventions(use_prefix=False, ivar_name_convention=LanguageConventions.NAME_UNDERBAR),
         }
 
@@ -360,7 +422,9 @@ class JsonSchema2Model(object):
         conventions = self.template_manager.get_conventions(self.lang)
 
         for classDef in self.models.values():
-
+            # from pprint import pprint
+            # pprint(classDef)
+            # import pdb; pdb.set_trace()
             if template_files.header_template:
                 self.render_model_to_file(classDef, classDef.header_file, template_files.header_template)
 
@@ -384,10 +448,13 @@ class JsonSchema2Model(object):
 
             try:
                 self.verbose_output("Writing %s" % outfile_name)
-                f.write(template.render(classDef=class_def, import_files=self.import_files,
+                f.write(template.render(classDef=class_def,
+                                        import_files=self.import_files,
                                         namespace=self.namespace,
                                         include_additional_properties=self.include_additional_properties,
-                                        timestamp=str(datetime.date.today()), file_name=src_file_name,
+                                        timestamp=str(datetime.date.today()),
+                                        year=int(datetime.date.today().year),
+                                        file_name=src_file_name,
                                         skip_deserialization=self.skip_deserialization))
             except:
                 print(exceptions.text_error_template().render())
@@ -405,9 +472,12 @@ class JsonSchema2Model(object):
 
             try:
                 self.verbose_output("Writing %s" % outfile_name)
-                f.write(decl_template.render(enumDef=enum_def, import_files=self.import_files,
+                f.write(decl_template.render(enumDef=enum_def,
+                                             import_files=self.import_files,
                                              namespace=self.namespace,
-                                             timestamp=str(datetime.date.today()), file_name=src_file_name,
+                                             timestamp=str(datetime.date.today()),
+                                             year=int(datetime.date.today().year),
+                                             file_name=src_file_name,
                                              include_additional_properties=self.include_additional_properties))
             except:
                 print(exceptions.text_error_template().render())
@@ -429,7 +499,9 @@ class JsonSchema2Model(object):
         with open(outfile_name, 'w') as f:
             try:
                 self.verbose_output("Writing %s" % outfile_name)
-                f.write(decl_template.render(models=models, timestamp=str(datetime.date.today()),
+                f.write(decl_template.render(models=models,
+                                             timestamp=str(datetime.date.today()),
+                                             year=int(datetime.date.today().year),
                                              namespace=self.namespace,
                                              include_additional_properties=self.include_additional_properties,
                                              file_name=src_file_name))
@@ -437,12 +509,12 @@ class JsonSchema2Model(object):
                 print(exceptions.text_error_template().render())
 
     def copy_dependencies(self):
-        support_path = os.path.join(os.path.dirname(__file__), 'templates.' + self.lang, 'dependencies')
+        support_path = os.path.join(os.path.dirname(__file__), 'templates_' + self.lang, 'dependencies')
         if os.path.exists(support_path):
             self.copy_files(support_path, os.path.join(self.outdir, 'dependencies'))
 
     def copy_static_files(self):
-        support_path = os.path.join(os.path.dirname(__file__), 'templates.' + self.lang, 'static')
+        support_path = os.path.join(os.path.dirname(__file__), 'templates_' + self.lang, 'static')
         if os.path.exists(support_path):
             self.copy_files(support_path, self.outdir)
 
@@ -707,9 +779,8 @@ class JsonSchema2Model(object):
         elif JsonSchemaKeywords.ENUM in schema_object:
 
             enum_def = EnumDef()
-            enum_def.name = self.mk_class_name(
-                schema_object[JsonSchemaKeywords.TYPENAME] if JsonSchemaKeywords.TYPENAME in schema_object else scope[
-                    -1])
+            enum_def.plain_name = schema_object[JsonSchemaKeywords.TYPENAME] if JsonSchemaKeywords.TYPENAME in schema_object else scope[-1]
+            enum_def.name = self.mk_class_name(enum_def.plain_name)
 
             # TODO: should I check to see if the enum is already in the models dict?
 
@@ -784,7 +855,7 @@ class JsonSchema2Model(object):
                 # root_schema = json.load(jsonFile)
                 # base_uri = 'file://' + os.path.split(os.path.realpath(f))[0]
                 base_uri = 'file://' + os.path.realpath(fname)
-                root_schema = jsonref.load(jsonFile, base_uri=base_uri, jsonschema=True, loader=loader)
+                root_schema = jsonref.load(jsonFile, base_uri=base_uri, jsonschema=True, loader=loader, object_pairs_hook=collections.OrderedDict)
 
                 if self.validate:
                     # TODO: Add exception handling
