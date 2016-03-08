@@ -3,9 +3,10 @@
 # rules processing.
 include generated_code/generated_srcs.mk
 
-SOURCES= *.cpp $(GENERATED_SRCS) third_party/json11/json11.cpp
+SOURCES= $(wildcard *.cpp) $(GENERATED_SRCS) third_party/json11/json11.cpp
 OBJDIR := generated_code/obj
 OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.cpp,%.o,$(SOURCES)))
+INPUT_SCHEMAS = jsonSchema/quickstart.schema.json jsonSchema/validation.schema.json
 
 # About `-cxx-isystem assert`: this makes sure `<assert.h>` is found in our
 # local `assert` directory rather than the system default.  In our `assert.h` we
@@ -19,8 +20,8 @@ test: generated_code/test
 generated_code/test: $(OBJS)
 	cc $(CFLAGS) -lm -lc++ -o $@ $(OBJS)
 
-generated_code/generated_srcs.mk: jsonSchema/quickstart.schema.json
-	$(CURDIR)/../src/js2model --namespace ft -o generated_code -l cpp $<
+generated_code/generated_srcs.mk: $(INPUT_SCHEMAS)
+	$(CURDIR)/../src/js2model --namespace ft -o generated_code -l cpp $^
 	echo "GENERATED_SRCS=`echo generated_code/*.cpp`" > generated_code/generated_srcs.mk
 
 $(OBJDIR)/%.o : %.cpp

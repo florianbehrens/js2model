@@ -106,10 +106,50 @@ temp_name = v.name + "Temp"
 }
 
 bool ${class_name}::is_valid() const {
+    try {
+        check_valid();
+    } catch (const exception &) {
+        return false;
+    }
     return true;
 }
 
+void ${class_name}::check_valid() const {
+% for v in classDef.variable_defs:
+<%
+optional_inst_name = "this->" + base.attr.inst_name(v.name)
+inst_name = optional_inst_name if v.isRequired else optional_inst_name + ".get()"
+_ = "" if v.isRequired else "    "
+%>\
+    /*
+    ${v}
+    */
+% if v.isArray:
+    // array
+% else:
+    % if not v.isRequired:
+    if (${optional_inst_name}.is_initialized()) {
+    % endif
+    % if v.type == "string":
+        % if v.minLength:
+    ${_}if (${inst_name}.size() < ${v.minLength})
+    ${_}    throw out_of_range("${base.attr.inst_name(v.name)} too short");
+        % endif
+        % if v.maxLength:
+    ${_}if (${inst_name}.size() > ${v.maxLength})
+    ${_}    throw out_of_range("${base.attr.inst_name(v.name)} too long");
+        % endif
+    % endif
+    % if not v.isRequired:
+    }
+    % endif
+% endif
+% endfor
+}
+
 Json ${class_name}::to_json() const {
+
+    assert(is_valid());
 
     auto object = Json::object();
 

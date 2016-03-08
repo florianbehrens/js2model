@@ -89,6 +89,9 @@ public:
 
     json11::Json to_json() const;
 
+protected:
+    void check_valid() const;
+
 }; // class ${class_name}
 
 } // namespace models

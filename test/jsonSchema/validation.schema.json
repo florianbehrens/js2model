@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "validationTest",
+    "type": "object",
+    "required": [],
+    "properties": {
+        "minLength2": {
+            "type": "string",
+            "minLength": 2
+        },
+        "maxLength4": {
+            "type": "string",
+            "maxLength": 4
+        },
+        "minLength2MaxLength4": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 4
+        },
+        "uuidPatternString": {
+            "type": "string",
+            "pattern": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+        },
+        "positiveInt": {
+            "type": "integer"
+        }
+    }
+}
