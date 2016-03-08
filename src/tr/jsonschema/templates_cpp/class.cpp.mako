@@ -25,6 +25,9 @@ THE SOFTWARE.
 #include "${classDef.header_file}"
 
 #include <assert.h>
+% if classDef.has_var_patterns:
+#include <regex>
+% endif
 #include <vector>
 
 using namespace std;
@@ -138,6 +141,11 @@ _ = "" if v.isRequired else "    "
         % if v.maxLength:
     ${_}if (${inst_name}.size() > ${v.maxLength})
     ${_}    throw out_of_range("${base.attr.inst_name(v.name)} too long");
+        % endif
+        % if v.pattern:
+    ${_}auto ${base.attr.inst_name(v.name)}_regex = regex(R"_(${v.pattern})_", regex_constants::ECMAScript);
+    ${_}if (!regex_match(${inst_name}, ${base.attr.inst_name(v.name)}_regex))
+    ${_}    throw invalid_argument("${base.attr.inst_name(v.name)} doesn't match regex pattern");
         % endif
     % endif
     % if not v.isRequired:

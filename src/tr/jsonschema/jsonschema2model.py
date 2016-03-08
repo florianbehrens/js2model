@@ -109,6 +109,7 @@ class JsonSchemaKeywords(object):
     MINIMUM = 'minimum'
     MAXLENGTH = 'maxLength'
     MINLENGTH = 'minLength'
+    PATTERN = 'pattern'
     DEFAULT = 'default'
     FORMAT = 'format'
     TYPE = 'type'
@@ -189,6 +190,10 @@ class ClassDef(object):
     def has_var_defaults(self):
         return True if len([d for d in self.variable_defs if d.default is not None]) else False
 
+    @property
+    def has_var_patterns(self):
+        return True if len([d for d in self.variable_defs if d.pattern is not None]) else False
+
 
 class EnumDef(object):
     def __init__(self):
@@ -244,6 +249,7 @@ class VariableDef(object):
         self.minimum = None
         self.maxLength = None
         self.minLength = None
+        self.pattern = None
         self.title = None
         self.description = None
         self.format = None
@@ -270,6 +276,7 @@ class VariableDef(object):
             'minimum': self.minimum,
             'maxLength': self.maxLength,
             'minLength': self.minLength,
+            'pattern': self.pattern,
             'title': self.title,
             'description': self.description,
             'format': self.format,
@@ -695,6 +702,9 @@ class JsonSchema2Model(object):
 
         if JsonSchemaKeywords.MINLENGTH in schema_object:
             var_def.minLength = schema_object[JsonSchemaKeywords.MINLENGTH]
+
+        if JsonSchemaKeywords.PATTERN in schema_object:
+            var_def.pattern = schema_object[JsonSchemaKeywords.PATTERN]
 
         if JsonSchemaKeywords.DEFAULT in schema_object:
             var_def.default = schema_object[JsonSchemaKeywords.DEFAULT]

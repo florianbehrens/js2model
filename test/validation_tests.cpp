@@ -35,4 +35,17 @@ TEST_CASE( "Classes respect validation rules" ) {
         v.minLength2MaxLength4 = "abcdef";
         REQUIRE(!v.is_valid());
     }
+
+    SECTION( "Regex patterns on strings" ) {
+        auto v = Validation();
+
+        v.uuidString = "de243a26e4064a9aa168bea0851a6817";
+        REQUIRE(!v.is_valid()); // fails, doesn't match pattern
+
+        v.uuidString = "DE243A26-E406-4A9A-A168-BEA0851A6817";
+        REQUIRE(!v.is_valid()); // fails, uppercase
+
+        v.uuidString = "de243a26-e406-4a9a-a168-bea0851a6817";
+        REQUIRE(v.is_valid()); // ok
+    }
 }
