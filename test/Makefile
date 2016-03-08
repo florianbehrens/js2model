@@ -8,7 +8,7 @@ OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.cpp,%.o,$(SOURCES)))
 
 # FIXME shouldn't need these includes
 # CFLAGS= -std=c++14 -stdlib=libc++ -I generated_code -I third_party -I third_party/boost
-CFLAGS= -std=c++14 -stdlib=libc++ -I generated_code -I third_party -I third_party/boost -cxx-isystem assert -include "generated_code/location.h" -include "generated_code/phoneLocation.h"
+CFLAGS= -std=c++14 -stdlib=libc++ -I generated_code -I third_party -I third_party/boost -cxx-isystem assert -include "generated_code/location.h" -include "generated_code/phone_location.h"
 
 test: generated_code/test
 	$<
