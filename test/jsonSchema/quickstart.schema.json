@@ -2,14 +2,18 @@
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "address",
     "type": "object",
+    "required": [
+        "description", "street", "city", "state", "zip", "location", "phone_numbers"
+    ],
     "properties": {
         "description": {
             "type": "object",
-            "required": true,
+            "required": [
+                "short_description"
+            ],
             "properties": {
                 "short_description": {
-                    "type": "string",
-                    "required": true
+                    "type": "string"
                 },
                 "long_description": {
                     "type": "string"
@@ -17,27 +21,22 @@
             }
         },
         "street": {
-            "type": "string",
-            "required": true
+            "type": "string"
         },
         "city": {
-            "type": "string",
-            "required": true
+            "type": "string"
         },
         "county": {
             "type": "string"
         },
         "state": {
-            "type": "string",
-            "required": true
+            "type": "string"
         },
         "zip": {
-            "type": "integer",
-            "required": true
+            "type": "integer"
         },
         "location": {
-            "enum": ["Home", "Work"],
-            "required": true
+            "enum": ["Home", "Work"]
         },
         "latitude": {
             "type": "number",
@@ -53,15 +52,14 @@
             "type": "array",
             "items": {
                 "type": "object",
+                "required": ["number", "phone_location"],
                 "properties": {
                     "number": {
                         "type": "string",
-                        "pattern": "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$",
-                        "required": true
+                        "pattern": "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$"
                     },
                     "phone_location": {
-                        "enum": ["home", "work", "mobile"],
-                        "required": true
+                        "enum": ["home", "work", "mobile"]
                     }
                 }
             }

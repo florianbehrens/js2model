@@ -606,11 +606,13 @@ class JsonSchema2Model(object):
             if JsonSchemaKeywords.PROPERTIES in schema_object:
 
                 properties = schema_object[JsonSchemaKeywords.PROPERTIES]
+                required_properties = schema_object.get(JsonSchemaKeywords.REQUIRED, {})
 
                 for prop in properties.keys():
                     scope.append(prop)
 
                     prop_var_def = self.create_model(properties[prop], scope)
+                    prop_var_def.isRequired = prop_var_def.json_name in required_properties
                     class_def.variable_defs.append(prop_var_def)
 
                     scope.pop()
@@ -667,9 +669,6 @@ class JsonSchema2Model(object):
 
         if JsonSchemaKeywords.DESCRIPTION in schema_object:
             var_def.description = schema_object[JsonSchemaKeywords.DESCRIPTION]
-
-        if JsonSchemaKeywords.REQUIRED in schema_object:
-            var_def.isRequired = schema_object[JsonSchemaKeywords.REQUIRED]
 
         if JsonSchemaKeywords.UNIQUEITEMS in schema_object:
             var_def.uniqueItems = schema_object[JsonSchemaKeywords.UNIQUEITEMS]
