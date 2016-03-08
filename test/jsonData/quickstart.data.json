@@ -1,19 +1,56 @@
 [
-{
-    "invalid": "invalid"
-},
-{
-    "street": "150 Shady Lane",
-    "city": "Seattle",
-    "state": "WA",
-    "zip": 98117,
-    "location": "Home"
-},
-{
-    "street": "Invalid location",
-    "city": "Seattle",
-    "state": "WA",
-    "zip": 98117,
-    "location": "The Moon"
-}
+    {
+        "invalid": "invalid"
+    },
+    {
+        "street": "150 Shady Lane",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": 98117,
+        "location": "Home",
+        "description" : {
+            "short_description": "Home Sweet Home"
+        },
+        "phone_numbers" : []
+    },
+    {
+        "street": "Invalid enum value for location",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": 98117,
+        "location": "The Moon",
+        "description" : {
+            "short_description": "Home Sweet Home"
+        },
+        "phone_numbers" : []
+    },
+    {
+        "street": "150 Shady Lane",
+        "city": "Seattle",
+        "county": "King",
+        "state": "WA",
+        "zip": 98117,
+        "location": "Work",
+        "latitude": 22.5,
+        "longitude": 46.7777,
+        "description" : {
+            "short_description": "Home Sweet Home",
+            "long_description": "a little house"
+        },
+        "phone_numbers":
+        [
+            {
+                "number": "(206)555-1212",
+                "phone_location": "work"
+            },
+            {
+                "number": "(206)555-1212",
+                "phone_location": "home"
+            },
+            {
+                "number": "(206)555-1212",
+                "phone_location": "mobile"
+            }
+        ]
+    }
 ]

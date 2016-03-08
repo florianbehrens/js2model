@@ -73,6 +73,8 @@ public:
     ${class_name}(const ${class_name} &other) = default;
     ${class_name}(const json11::Json &value);
 
+    bool is_valid() const;
+
     json11::Json to_json() const;
 
 }; // class ${class_name}

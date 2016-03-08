@@ -3,6 +3,19 @@
     "title": "address",
     "type": "object",
     "properties": {
+        "description": {
+            "type": "object",
+            "required": true,
+            "properties": {
+                "short_description": {
+                    "type": "string",
+                    "required": true
+                },
+                "long_description": {
+                    "type": "string"
+                }
+            }
+        },
         "street": {
             "type": "string",
             "required": true
@@ -46,7 +59,7 @@
                         "pattern": "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$",
                         "required": true
                     },
-                    "phoneLocation": {
+                    "phone_location": {
                         "enum": ["home", "work", "mobile"],
                         "required": true
                     }

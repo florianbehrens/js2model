@@ -43,7 +43,7 @@ ${class_name}::${class_name}(const Json &json) {
 % for v in classDef.variable_defs:
 <%
 inst_name = "this->" + base.attr.inst_name(v.name)
-temp_name = v.name + "_temp"
+temp_name = v.name + "Temp"
 %>\
     auto ${temp_name} = json["${v.json_name}"];
 % if v.isRequired:
@@ -97,7 +97,7 @@ temp_name = v.name + "_temp"
         ${inst_name} = ${temp_name}.bool_value();
         % elif v.schema_type == 'object':
         assert(${temp_name}.is_object());
-        ${inst_name} = ${v.type}(${temp_name}->object_value);
+        ${inst_name} = ${v.type}(${temp_name});
         % endif
         % endif
     }
@@ -105,6 +105,33 @@ temp_name = v.name + "_temp"
     % endfor
 }
 
+bool ${class_name}::is_valid() const {
+    return true;
+}
+
+Json ${class_name}::to_json() const {
+
+    auto object = Json::object();
+
+% for v in classDef.variable_defs:
+<%
+    inst_name = "this->" + base.attr.inst_name(v.name)
+%>\
+% if not v.isRequired and not v.isArray:
+    if (${inst_name}.is_initialized()) {
+        object["${v.json_name}"] = ${inst_name}.get();
+    }
+% elif v.isArray:
+    object["${v.json_name}"] = Json(${inst_name});
+% elif v.isEnum:
+    object["${v.json_name}"] = to_string(${inst_name});
+% else:
+    object["${v.json_name}"] = ${inst_name};
+% endif
+
+% endfor
+    return Json(object);
+}
 
 } // namespace models
 } // namespace ${namespace}
