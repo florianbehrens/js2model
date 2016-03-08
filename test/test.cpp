@@ -35,5 +35,10 @@ TEST_CASE( "JSON data can be loaded into classes" ) {
         REQUIRE(!q.latitude.is_initialized());
         REQUIRE(q.location == Location::Home);
     }
+
+    SECTION( "invalid enum value throws" ) {
+        auto item = json[2];
+        REQUIRE_THROWS_AS(auto q = Quickstart(item), std::out_of_range);
+    }
 }
 

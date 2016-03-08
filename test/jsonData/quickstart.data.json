@@ -8,5 +8,12 @@
     "state": "WA",
     "zip": 98117,
     "location": "Home"
+},
+{
+    "street": "Invalid location",
+    "city": "Seattle",
+    "state": "WA",
+    "zip": 98117,
+    "location": "The Moon"
 }
 ]
