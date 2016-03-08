@@ -828,7 +828,7 @@ class JsonSchema2Model(object):
         lang_conventions = self.template_manager.get_conventions(self.lang)
 
         # remove '.jinja', then use extension from the template name
-        src_file_name = class_def.plain_name + os.path.splitext(templ_name.replace('.mako', ''))[1]
+        src_file_name = class_def.name + os.path.splitext(templ_name.replace('.mako', ''))[1]
 
         if self.prefix is not None and lang_conventions and lang_conventions.use_prefix:
             src_file_name = self.prefix + src_file_name[0].upper() + src_file_name[1:]
