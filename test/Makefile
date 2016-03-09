@@ -6,7 +6,7 @@ include generated_code/generated_srcs.mk
 SOURCES= $(wildcard *.cpp) $(GENERATED_SRCS) third_party/json11/json11.cpp
 OBJDIR := generated_code/obj
 OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.cpp,%.o,$(SOURCES)))
-INPUT_SCHEMAS = jsonSchema/quickstart.schema.json jsonSchema/validation.schema.json
+INPUT_SCHEMAS = jsonSchema/quickstart.schema.json jsonSchema/validation.schema.json jsonSchema/array-test.schema.json
 
 # About `-cxx-isystem assert`: this makes sure `<assert.h>` is found in our
 # local `assert` directory rather than the system default.  In our `assert.h` we

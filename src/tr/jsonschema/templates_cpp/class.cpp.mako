@@ -67,11 +67,12 @@ temp_name = v.name + "Temp"
         assert(${temp_name}.is_array());
         for( const auto array_item : ${temp_name}.array_items() ) {
         % if v.schema_type == 'string':
-            if (!array_item.is_null()) {
             assert(array_item.is_string());
             destination_array.emplace_back(array_item.string_value());
-            }
         % elif v.schema_type == 'integer':
+            assert(array_item.is_number());
+            destination_array.emplace_back(int(array_item.number_value()));
+        % elif v.schema_type == 'number':
             assert(array_item.is_number());
             destination_array.emplace_back(int(array_item.number_value()));
         % elif v.schema_type == 'boolean':
@@ -204,11 +205,11 @@ object["${var_def.json_name}"] = ${var_def.enum_def.plain_name}_to_string(${inst
 object["${var_def.json_name}"] = ${inst_name};
 % endif
 </%def>\
-% if not v.isRequired and not v.isArray:
+% if not v.isRequired:
     if (${optional_inst_name}.is_initialized()) {
 % endif
     ${_}${emit_assignment(v)}\
-% if not v.isRequired and not v.isArray:
+% if not v.isRequired:
     }
 % endif
 

@@ -1,0 +1,19 @@
+[
+    {
+        "optionalArray": ["foo", "bar"]
+    },
+    {
+        "requiredArray": []
+    },
+    {
+        "requiredArray": [ 1, 2, 3 ]
+    },
+    {
+        "requiredArray": [ 1, 2, 3 ],
+        "optionalArray": []
+    },
+    {
+        "requiredArray": [ 1, 2, 3 ],
+        "optionalArray": ["foo", "bar"]
+    }
+]

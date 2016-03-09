@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "title": "arrayTest",
+    "type": "object",
+    "required": ["requiredArray"],
+    "properties": {
+        "requiredArray": {
+            "type": "array",
+            "items": {
+                "type": "number",
+                "minItems": 2
+            }
+        },
+        "optionalArray": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "minItems": 2
+            }
+        }
+    }
+}
