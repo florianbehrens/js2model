@@ -134,11 +134,11 @@ _ = "" if v.isRequired else "    "
     if (${optional_inst_name}.is_initialized()) {
     % endif
     % if v.type == "string":
-        % if v.minLength:
+        % if v.minLength is not None:
     ${_}if (${inst_name}.size() < ${v.minLength})
     ${_}    throw out_of_range("${base.attr.inst_name(v.name)} too short");
         % endif
-        % if v.maxLength:
+        % if v.maxLength is not None:
     ${_}if (${inst_name}.size() > ${v.maxLength})
     ${_}    throw out_of_range("${base.attr.inst_name(v.name)} too long");
         % endif
@@ -146,6 +146,18 @@ _ = "" if v.isRequired else "    "
     ${_}auto ${base.attr.inst_name(v.name)}_regex = regex(R"_(${v.pattern})_", regex_constants::ECMAScript);
     ${_}if (!regex_match(${inst_name}, ${base.attr.inst_name(v.name)}_regex))
     ${_}    throw invalid_argument("${base.attr.inst_name(v.name)} doesn't match regex pattern");
+        % endif
+    % endif
+    % if v.type in ["integer", "number"]:
+        % if v.minimum is not None:
+<% op = "<=" if v.exclusiveMinimum else "<" %>\
+    ${_}if (${inst_name} ${op} ${v.minimum})
+    ${_}    throw out_of_range("${base.attr.inst_name(v.name)} too small");
+        % endif
+        % if v.maximum is not None:
+<% op = ">=" if v.exclusiveMaximum else ">" %>\
+    ${_}if (${inst_name} ${op} ${v.maximum})
+    ${_}    throw out_of_range("${base.attr.inst_name(v.name)} too large");
         % endif
     % endif
     % if not v.isRequired:
@@ -162,30 +174,26 @@ Json ${class_name}::to_json() const {
     auto object = Json::object();
 
 % for v in classDef.variable_defs:
-<%
-    inst_name = "this->" + base.attr.inst_name(v.name)
+<%\
+optional_inst_name = "this->" + base.attr.inst_name(v.name)
+inst_name = optional_inst_name if v.isRequired else optional_inst_name + ".get()"
+_ = "" if v.isRequired else "    "
 %>\
 <%def name='emit_assignment(var_def)'>\
-<%
-if var_def.isRequired:
-    value = inst_name
-else:
-    value = inst_name + ".get()"
-%>
 % if var_def.isArray:
-    object["${var_def.json_name}"] = Json(${value});
+object["${var_def.json_name}"] = Json(${inst_name});
 % elif var_def.isEnum:
-    object["${var_def.json_name}"] = ${var_def.enum_def.plain_name}_to_string(${value});
+object["${var_def.json_name}"] = ${var_def.enum_def.plain_name}_to_string(${inst_name});
 % else:
-    object["${var_def.json_name}"] = ${value};
+object["${var_def.json_name}"] = ${inst_name};
 % endif
 </%def>\
 % if not v.isRequired and not v.isArray:
-    if (${inst_name}.is_initialized()) {
-        ${emit_assignment(v)}
+    if (${optional_inst_name}.is_initialized()) {
+% endif
+    ${_}${emit_assignment(v)}\
+% if not v.isRequired and not v.isArray:
     }
-% else:
-    ${emit_assignment(v)}
 % endif
 
 % endfor

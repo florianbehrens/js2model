@@ -21,8 +21,57 @@
             "type": "string",
             "pattern": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
         },
+
         "positiveInt": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+        },
+        "nonNegativeInt": {
+            "type": "integer",
+            "minimum": 0
+        },
+        "negativeInt": {
+            "type": "integer",
+            "maximum": 0,
+            "exclusiveMaximum": true
+        },
+        "nonPositiveInt": {
+            "type": "integer",
+            "maximum": 0
+        },
+        "rangedInt": {
+            "type": "integer",
+            "minimum": -8,
+            "maximum": 400,
+            "exclusiveMinimum": true,
+            "exclusiveMaximum": false
+        },
+
+        "positiveDouble": {
+            "type": "number",
+            "minimum": 0.0,
+            "exclusiveMinimum": true
+        },
+        "nonNegativeDouble": {
+            "type": "number",
+            "minimum": 0.0
+        },
+        "negativeDouble": {
+            "type": "number",
+            "maximum": 0.0,
+            "exclusiveMaximum": true
+        },
+        "nonPositiveDouble": {
+            "type": "number",
+            "maximum": 0.0
+        },
+        "rangedDouble": {
+            "type": "integer",
+            "minimum": -8.25,
+            "maximum": 16.0,
+            "exclusiveMinimum": false,
+            "exclusiveMaximum": true
         }
     }
 }

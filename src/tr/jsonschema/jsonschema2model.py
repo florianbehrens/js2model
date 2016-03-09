@@ -107,6 +107,8 @@ class JsonSchemaKeywords(object):
     MINITEMS = 'minItems'
     MAXIMUM = 'maximum'
     MINIMUM = 'minimum'
+    EXCLUSIVE_MAXIMUM = 'exclusiveMaximum'
+    EXCLUSIVE_MINIMUM = 'exclusiveMinimum'
     MAXLENGTH = 'maxLength'
     MINLENGTH = 'minLength'
     PATTERN = 'pattern'
@@ -247,6 +249,8 @@ class VariableDef(object):
         self.minItems = None
         self.maximum = None
         self.minimum = None
+        self.exclusiveMaximum = False
+        self.exclusiveMinimum = False
         self.maxLength = None
         self.minLength = None
         self.pattern = None
@@ -274,6 +278,8 @@ class VariableDef(object):
             'minItems': self.minItems,
             'maximum': self.maximum,
             'minimum': self.minimum,
+            'exclusiveMaximum': self.exclusiveMaximum,
+            'exclusiveMinimum': self.exclusiveMinimum,
             'maxLength': self.maxLength,
             'minLength': self.minLength,
             'pattern': self.pattern,
@@ -696,6 +702,12 @@ class JsonSchema2Model(object):
 
         if JsonSchemaKeywords.MINIMUM in schema_object:
             var_def.minimum = schema_object[JsonSchemaKeywords.MINIMUM]
+
+        if JsonSchemaKeywords.EXCLUSIVE_MAXIMUM in schema_object:
+            var_def.exclusiveMaximum = schema_object[JsonSchemaKeywords.EXCLUSIVE_MAXIMUM]
+
+        if JsonSchemaKeywords.EXCLUSIVE_MINIMUM in schema_object:
+            var_def.exclusiveMinimum = schema_object[JsonSchemaKeywords.EXCLUSIVE_MINIMUM]
 
         if JsonSchemaKeywords.MAXLENGTH in schema_object:
             var_def.maxLength = schema_object[JsonSchemaKeywords.MAXLENGTH]
