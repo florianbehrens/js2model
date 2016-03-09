@@ -11,7 +11,7 @@
         "description" : {
             "short_description": "Home Sweet Home"
         },
-        "phone_numbers" : []
+        "phone_numbers" : [{ "number": "(206)555-1212" }]
     },
     {
         "street": "Invalid enum value for location",
@@ -22,7 +22,7 @@
         "description" : {
             "short_description": "Home Sweet Home"
         },
-        "phone_numbers" : []
+        "phone_numbers" : [{ "number": "(206)555-1212" }]
     },
     {
         "street": "150 Shady Lane",

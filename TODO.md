@@ -7,8 +7,9 @@ High
 [x] Support "required" array
 [x] Support `pattern` for string types
 [x] Support min/max for numerics
-[ ] Rationalize required vs. optional arrays
-[ ] Array size validation
+[x] Rationalize required vs. optional arrays
+[x] Array size validation
+[ ] `to_json` broken for arrays
 
 Medium
 

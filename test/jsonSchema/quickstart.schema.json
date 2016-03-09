@@ -53,6 +53,7 @@
             "items": {
                 "type": "object",
                 "required": ["number", "phone_location"],
+                "minItems": 1,
                 "properties": {
                     "number": {
                         "type": "string",

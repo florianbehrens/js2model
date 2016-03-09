@@ -127,7 +127,7 @@ Convert a JSON type to an Objective C type.
              varType = cppType
              itemType = None
 
-        if useOptionals and not variableDef.isRequired and not variableDef.isArray:
+        if useOptionals and not variableDef.isRequired:
              varType = "boost::optional<%s>" % varType
              itemType = "boost::optional<%s>" % itemType
 

@@ -195,3 +195,44 @@ TEST_CASE( "Floating-point validation" ) {
          REQUIRE(!v.is_valid()); // fails
      }
 }
+
+TEST_CASE( "Array validation" ) {
+     SECTION( "Minimum" ) {
+         auto v = Validation();
+
+         v.minArray = { 1 };
+         REQUIRE(!v.is_valid());
+
+         v.minArray = { 1, 2 };
+         REQUIRE(v.is_valid());
+     }
+
+     SECTION( "Maximum" ) {
+         auto v = Validation();
+
+         v.maxArray = { };
+         REQUIRE(v.is_valid());
+
+         v.maxArray = { 1, 2, 3, 4, 5, 6, 7, 8 };
+         REQUIRE(v.is_valid());
+
+         v.maxArray = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+         REQUIRE(!v.is_valid());
+     }
+
+     SECTION( "Range" ) {
+         auto v = Validation();
+
+         v.rangedArray = vector<int>();
+         REQUIRE(!v.is_valid());
+
+         v.rangedArray = { 1 };
+         REQUIRE(v.is_valid());
+
+         v.rangedArray = { 1, 2, 3, 4, 5, 6, 7, 8 };
+         REQUIRE(v.is_valid());
+
+         v.rangedArray = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+         REQUIRE(!v.is_valid());
+     }
+}

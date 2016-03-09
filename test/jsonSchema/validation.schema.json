@@ -72,6 +72,29 @@
             "maximum": 16.0,
             "exclusiveMinimum": false,
             "exclusiveMaximum": true
+        },
+
+        "minArray": {
+            "type": "array",
+            "items": {
+                "minItems": 2,
+                "type": "integer"
+            }
+        },
+        "maxArray": {
+            "type": "array",
+            "items": {
+                "maxItems": 8,
+                "type": "integer"
+            }
+        },
+        "rangedArray": {
+            "type": "array",
+            "items": {
+                "minItems": 1,
+                "maxItems": 8,
+                "type": "integer"
+            }
         }
     }
 }
