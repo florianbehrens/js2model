@@ -1,6 +1,6 @@
 [
     {
-        "optionalArray": ["foo", "bar"]
+        "optionalStrings": ["foo", "bar"]
     },
     {
         "requiredArray": []
@@ -10,10 +10,30 @@
     },
     {
         "requiredArray": [ 1, 2, 3 ],
-        "optionalArray": []
+        "optionalStrings": []
     },
     {
         "requiredArray": [ 1, 2, 3 ],
-        "optionalArray": ["foo", "bar"]
+        "optionalStrings": ["foo", "bar"]
+    },
+    {
+        "requiredArray": [ 1, 2, 3 ],
+        "optionalBools": [true, false]
+    },
+    {
+        "requiredArray": [ 1, 2, 3 ],
+        "optionalNumbers": [1.25, -2.5]
+    },
+    {
+        "requiredArray": [ 1, 2, 3 ],
+        "optionalInts": [-8, 16]
+    },
+    {
+        "requiredArray": [ 1, 2, 3 ],
+        "optionalEnums": ["home", "work"]
+    },
+    {
+        "requiredArray": [ 1, 2, 3 ],
+        "optionalObjects": [{ "foo": 1, "bar": false}, { "foo": 2, "bar": true}]
     }
 ]

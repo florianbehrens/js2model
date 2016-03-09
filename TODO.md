@@ -9,7 +9,7 @@ High
 [x] Support min/max for numerics
 [x] Rationalize required vs. optional arrays
 [x] Array size validation
-[ ] `to_json` broken for arrays
+[x] `to_json` broken for arrays
 
 Medium
 

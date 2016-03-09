@@ -68,13 +68,17 @@ temp_name = v.name + "Temp"
         for( const auto array_item : ${temp_name}.array_items() ) {
         % if v.schema_type == 'string':
             assert(array_item.is_string());
+            % if v.isEnum:
+            destination_array.emplace_back(string_to_${v.json_name}(array_item.string_value()));
+            % else:
             destination_array.emplace_back(array_item.string_value());
+            % endif:
         % elif v.schema_type == 'integer':
             assert(array_item.is_number());
             destination_array.emplace_back(int(array_item.number_value()));
         % elif v.schema_type == 'number':
             assert(array_item.is_number());
-            destination_array.emplace_back(int(array_item.number_value()));
+            destination_array.emplace_back(array_item.number_value());
         % elif v.schema_type == 'boolean':
             assert(array_item.is_bool());
             destination_array.emplace_back(array_item.bool_value());
@@ -198,17 +202,30 @@ _ = "" if v.isRequired else "    "
 %>\
 <%def name='emit_assignment(var_def)'>\
 % if var_def.isArray:
-object["${var_def.json_name}"] = Json(${inst_name});
+    % if var_def.isEnum:
+${_}    {
+${_}        auto enumStringArray = Json::array(${inst_name}.size());
+${_}        std::transform(${inst_name}.begin(),
+${_}                       ${inst_name}.end(),
+${_}                       enumStringArray.begin(),
+${_}                       [](const auto &val) {
+${_}                           return ${var_def.enum_def.plain_name}_to_string(val);
+${_}                       });
+${_}        object["${var_def.json_name}"] = enumStringArray;
+${_}    }
+    % else:
+${_}    object["${var_def.json_name}"] = Json(${inst_name});
+    % endif:
 % elif var_def.isEnum:
-object["${var_def.json_name}"] = ${var_def.enum_def.plain_name}_to_string(${inst_name});
+${_}    object["${var_def.json_name}"] = ${var_def.enum_def.plain_name}_to_string(${inst_name});
 % else:
-object["${var_def.json_name}"] = ${inst_name};
+${_}    object["${var_def.json_name}"] = ${inst_name};
 % endif
 </%def>\
 % if not v.isRequired:
     if (${optional_inst_name}.is_initialized()) {
 % endif
-    ${_}${emit_assignment(v)}\
+${emit_assignment(v)}\
 % if not v.isRequired:
     }
 % endif
