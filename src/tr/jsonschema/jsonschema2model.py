@@ -449,13 +449,14 @@ class JsonSchema2Model(object):
             if template_files.impl_template:
                 self.render_model_to_file(classDef, classDef.impl_file, template_files.impl_template)
 
-        # Currently rendering enums into classes. This can probably go away.
+        # Currently rendering enums into classes. This commented-out block can probably go away.
         # if template_files.enum_template:
         #     for enumDef in self.enums.values():
         #         self.render_enum_to_file(enumDef, template_files.enum_template)
 
-        for global_template in template_files.global_templates:
-            self.render_global_template(self.models.values(), global_template)
+        # The `models.h` file is just noise
+        # for global_template in template_files.global_templates:
+        #     self.render_global_template(self.models.values(), global_template)
 
     def render_model_to_file(self, class_def, src_file_name, templ_name):
 

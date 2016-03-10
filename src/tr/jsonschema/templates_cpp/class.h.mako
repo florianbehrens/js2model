@@ -67,7 +67,7 @@ namespace models {
 class_name = classDef.name
 superClass = classDef.superClasses[0] if len(classDef.superClasses) else None
 %>
-class ${class_name} ${(': protected ' + superClass) if superClass else ''}
+class ${class_name + ((': protected ' + superClass) if superClass else '')}
 {
 public:
 % for e in [x.enum_def for x in classDef.variable_defs if x.enum_def]:

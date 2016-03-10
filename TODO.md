@@ -10,11 +10,20 @@ High
 [x] Rationalize required vs. optional arrays
 [x] Array size validation
 [x] `to_json` broken for arrays
+[x] Remove debugging code
+[x] ~~Nested class names should probably default to title property if passed~~ Can use `typeName` property
+[x] Remove base.hpp
+[x] Remove models.h
 
 Medium
 
 [x] Optional parameters should be emitted as boost::optional<T>
 [x] More testing around arrays - not sure that's correct
+[ ] Remove `additional_properties`?
+[ ] `enum` is a modifier that should work on any type
+    works: { "enum": [ "a", "b", c"] }
+    fails: { "type": "string",
+             "enum": [ "a", "b", c"] }
 
 Low
 

@@ -139,9 +139,6 @@ optional_inst_name = "this->" + base.attr.inst_name(v.name)
 inst_name = optional_inst_name if v.isRequired else optional_inst_name + ".get()"
 _ = "" if v.isRequired else "    "
 %>\
-    /*
-    ${v}
-    */
 % if not v.isRequired:
     if (${optional_inst_name}.is_initialized()) {
 % endif
