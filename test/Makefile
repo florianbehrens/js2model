@@ -31,7 +31,3 @@ $(OBJDIR)/%.o : %.cpp
 clean:
 	rm -rf generated_code
 
-foo:
-	echo $(SOURCES) > /dev/null
-	echo $(OBJS) > /dev/null
-

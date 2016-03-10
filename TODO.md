@@ -14,6 +14,7 @@ High
 [x] ~~Nested class names should probably default to title property if passed~~ Can use `typeName` property
 [x] Remove base.hpp
 [x] Remove models.h
+[x] Don't emit empty classes (see Common.cpp)
 [x] Different namespace to avoid conflicts (`schema`)
 
 Medium
@@ -21,6 +22,7 @@ Medium
 [x] Optional parameters should be emitted as boost::optional<T>
 [x] More testing around arrays - not sure that's correct
 [x] Remove `additional_properties` support
+[ ] Emitting empty `is_valid` checks for optionals
 [ ] `enum` is a modifier that should work on any type
     works: { "enum": [ "a", "b", c"] }
     fails: { "type": "string",
@@ -29,5 +31,5 @@ Medium
 Low
 
 [ ] Could nest schema classes as appropriate
-[ ] Add directive to bypass precommit/clang-format
+[x] Add directive to bypass precommit/clang-format
 [ ] Ctors that force you to fill all values...maybe. Tends to be annoying when there are many values.

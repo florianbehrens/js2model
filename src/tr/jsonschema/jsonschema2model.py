@@ -440,6 +440,9 @@ class JsonSchema2Model(object):
         conventions = self.template_manager.get_conventions(self.lang)
 
         for classDef in self.models.values():
+            if len(classDef.variable_defs) == 0:
+                # print("Not emitting empty class %s" % classDef.name)
+                continue
             # from pprint import pprint
             # pprint(classDef)
             # import pdb; pdb.set_trace()
