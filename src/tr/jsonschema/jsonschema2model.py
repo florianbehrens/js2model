@@ -74,7 +74,7 @@ class JmgLoader(object):
         self.defaultLoader = jsonref.JsonLoader(store, cache_results)
 
     def __call__(self, uri, **kwargs):
-        json = self.defaultLoader(uri, **kwargs)
+        json = self.defaultLoader(uri, object_pairs_hook=collections.OrderedDict, **kwargs)
 
         # keep track of URI that the schema was loaded from
         json['__uri__'] = uri
