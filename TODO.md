@@ -14,6 +14,7 @@ High
 [x] ~~Nested class names should probably default to title property if passed~~ Can use `typeName` property
 [x] Remove base.hpp
 [x] Remove models.h
+[x] Different namespace to avoid conflicts (`schema`)
 
 Medium
 

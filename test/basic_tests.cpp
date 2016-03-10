@@ -7,7 +7,7 @@ using namespace boost;
 using namespace json11;
 using namespace std;
 
-using namespace ft::models;
+using namespace ft::js2model::test;
 
 TEST_CASE( "JSON data can be loaded into classes" ) {
     ifstream data("jsonData/quickstart.data.json");

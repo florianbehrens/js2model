@@ -61,8 +61,9 @@ THE SOFTWARE.
 % endfor
 % endif
 
-namespace ${namespace} {
-namespace models {
+% for ns in namespace.split('::'):
+namespace ${ns} {
+% endfor
 <%
 class_name = classDef.name
 superClass = classDef.superClasses[0] if len(classDef.superClasses) else None
@@ -94,6 +95,7 @@ protected:
 
 }; // class ${class_name}
 
-} // namespace models
-} // namespace ${namespace}
+% for ns in reversed(namespace.split('::')):
+} // namespace ${ns}
+% endfor
 </%block>

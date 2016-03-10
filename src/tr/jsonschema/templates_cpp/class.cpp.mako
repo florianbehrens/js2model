@@ -36,8 +36,9 @@ using namespace json11;
 <%
 class_name = classDef.name
 %>\
-namespace ${namespace} {
-namespace models {
+% for ns in namespace.split('::'):
+namespace ${ns} {
+% endfor
 
 ${class_name}::${class_name}(const Json &json) {
 
@@ -254,7 +255,8 @@ ${class_name}::${enumDef.name} ${class_name}::string_to_${enumDef.plain_name}(co
 }
 % endfor
 
-} // namespace models
-} // namespace ${namespace}
+% for ns in reversed(namespace.split('::')):
+} // namespace ${ns}
+% endfor
 
 </%block>

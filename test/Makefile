@@ -21,7 +21,7 @@ generated_code/test: $(OBJS)
 	cc $(CFLAGS) -lm -lc++ -o $@ $(OBJS)
 
 generated_code/generated_srcs.mk: $(INPUT_SCHEMAS)
-	$(CURDIR)/../src/js2model --namespace ft -o generated_code -l cpp $^
+	$(CURDIR)/../src/js2model --namespace ft::js2model::test -o generated_code -l cpp $^
 	echo "GENERATED_SRCS=`echo generated_code/*.cpp`" > generated_code/generated_srcs.mk
 
 $(OBJDIR)/%.o : %.cpp
