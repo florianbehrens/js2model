@@ -19,7 +19,7 @@ Medium
 
 [x] Optional parameters should be emitted as boost::optional<T>
 [x] More testing around arrays - not sure that's correct
-[ ] Remove `additional_properties`?
+[x] Remove `additional_properties` support
 [ ] `enum` is a modifier that should work on any type
     works: { "enum": [ "a", "b", c"] }
     fails: { "type": "string",

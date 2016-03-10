@@ -388,7 +388,7 @@ class JsonSchema2Model(object):
     SCHEMA_URI = '__uri__'
 
     def __init__(self, outdir, import_files=None, super_classes=None, interfaces=None,
-                 include_additional_properties=True,
+                 include_additional_properties=False,
                  lang='objc', prefix='TR', namespace='tr', root_name=None, validate=True, verbose=False,
                  skip_deserialization=False, include_dependencies=True, template_manager=TemplateManager()):
 
