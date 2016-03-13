@@ -35,5 +35,13 @@
     {
         "requiredArray": [ 1, 2, 3 ],
         "optionalObjects": [{ "foo": 1, "bar": false}, { "foo": 2, "bar": true}]
+    },
+    {
+        "requiredArray": [ 1, 2, 3 ],
+        "rangedInts": [16, 17]
+    },
+    {
+        "requiredArray": [ 1, 2, 3 ],
+        "rangedInts": [-16, -17]
     }
 ]

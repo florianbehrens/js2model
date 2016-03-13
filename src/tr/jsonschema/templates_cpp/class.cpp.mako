@@ -33,6 +33,17 @@ THE SOFTWARE.
 using namespace std;
 using namespace json11;
 
+<%!
+import functools
+def indent(indent_level, str):
+    return str.replace("\n", "\n" + " " * indent_level).rstrip()
+
+indent4 = functools.partial(indent, 4)
+indent8 = functools.partial(indent, 8)
+indent12 = functools.partial(indent, 12)
+indent16 = functools.partial(indent, 16)
+
+%>\
 <%
 class_name = classDef.name
 %>\
@@ -139,49 +150,101 @@ void ${class_name}::check_valid() const {
 optional_inst_name = "this->" + base.attr.inst_name(v.name)
 inst_name = optional_inst_name if v.isRequired else optional_inst_name + ".get()"
 _ = "" if v.isRequired else "    "
+
+has_array_validation_checks = (v.minItems is not None or
+                               v.maxItems is not None)
+
+has_string_validation_checks = (v.minLength is not None or
+                                v.maxLength is not None or
+                                v.pattern is not None)
+
+has_numeric_validation_checks = (v.minimum is not None or
+                                 v.maximum is not None)
+
+has_any_validation_checks = (has_array_validation_checks or
+                             has_string_validation_checks or
+                             has_numeric_validation_checks)
 %>\
+<%def name='emit_string_validation_checks(inst_name, var_def)'>\
+% if var_def.minLength is not None:
+if (${inst_name}.size() < ${var_def.minLength})
+    throw out_of_range("${base.attr.inst_name(var_def.name)} too short");
+% endif
+% if var_def.maxLength is not None:
+if (${inst_name}.size() > ${var_def.maxLength})
+    throw out_of_range("${base.attr.inst_name(var_def.name)} too long");
+% endif
+% if var_def.pattern:
+auto ${base.attr.inst_name(var_def.name)}_regex = regex(R"_(${var_def.pattern})_", regex_constants::ECMAScript);
+if (!regex_match(${inst_name}, ${base.attr.inst_name(var_def.name)}_regex))
+    throw invalid_argument("${base.attr.inst_name(var_def.name)} doesn't match regex pattern");
+% endif
+</%def>\
+\
+<%def name='emit_numeric_validation_checks(inst_name, var_def)'>\
+% if var_def.minimum is not None:
+<% op = "<=" if var_def.exclusiveMinimum else "<" %>\
+if (${inst_name} ${op} ${var_def.minimum})
+    throw out_of_range("${base.attr.inst_name(var_def.name)} too small");
+% endif
+% if var_def.maximum is not None:
+<% op = ">=" if var_def.exclusiveMaximum else ">" %>\
+if (${inst_name} ${op} ${var_def.maximum})
+    throw out_of_range("${base.attr.inst_name(var_def.name)} too large");
+% endif
+</%def>\
+\
+<%def name='emit_array_validation_checks(inst_name, var_def)'>\
+% if has_array_validation_checks:
+% if var_def.minItems is not None:
+if (${inst_name}.size() < ${var_def.minItems})
+    throw out_of_range("Array ${base.attr.inst_name(var_def.name)} has too few items");
+% endif
+% if var_def.maxItems is not None:
+if (${inst_name}.size() > ${var_def.maxItems})
+    throw out_of_range("Array ${base.attr.inst_name(var_def.name)} has too many items");
+% endif
+% endif
+% if has_string_validation_checks or has_numeric_validation_checks:
+for (const auto &arrayItem : ${inst_name}) {
+% if has_string_validation_checks:
+    ${capture(emit_string_validation_checks, "arrayItem", var_def) | indent4}
+% endif
+% if has_numeric_validation_checks:
+    ${capture(emit_numeric_validation_checks, "arrayItem", var_def) | indent4}
+% endif
+}
+% endif
+</%def>\
+\
+% if not has_any_validation_checks:
+<% continue %>\
+% endif
+\
 % if not v.isRequired:
     if (${optional_inst_name}.is_initialized()) {
+% if v.isArray:
+        ${capture(emit_array_validation_checks, inst_name, v) | indent8}
+% else:
+% if has_string_validation_checks:
+        ${capture(emit_string_validation_checks, inst_name, v) | indent8}
 % endif
-    % if v.isArray:
-        % if v.minItems is not None:
-    ${_}if (${inst_name}.size() < ${v.minItems})
-    ${_}    throw out_of_range("Array ${base.attr.inst_name(v.name)} has too few items");
-        % endif
-        % if v.maxItems is not None:
-    ${_}if (${inst_name}.size() > ${v.maxItems})
-    ${_}    throw out_of_range("Array ${base.attr.inst_name(v.name)} has too many items");
-        % endif
-    % endif
-    % if v.type == "string":
-        % if v.minLength is not None:
-    ${_}if (${inst_name}.size() < ${v.minLength})
-    ${_}    throw out_of_range("${base.attr.inst_name(v.name)} too short");
-        % endif
-        % if v.maxLength is not None:
-    ${_}if (${inst_name}.size() > ${v.maxLength})
-    ${_}    throw out_of_range("${base.attr.inst_name(v.name)} too long");
-        % endif
-        % if v.pattern:
-    ${_}auto ${base.attr.inst_name(v.name)}_regex = regex(R"_(${v.pattern})_", regex_constants::ECMAScript);
-    ${_}if (!regex_match(${inst_name}, ${base.attr.inst_name(v.name)}_regex))
-    ${_}    throw invalid_argument("${base.attr.inst_name(v.name)} doesn't match regex pattern");
-        % endif
-    % endif
-    % if v.type in ["integer", "number"]:
-        % if v.minimum is not None:
-<% op = "<=" if v.exclusiveMinimum else "<" %>\
-    ${_}if (${inst_name} ${op} ${v.minimum})
-    ${_}    throw out_of_range("${base.attr.inst_name(v.name)} too small");
-        % endif
-        % if v.maximum is not None:
-<% op = ">=" if v.exclusiveMaximum else ">" %>\
-    ${_}if (${inst_name} ${op} ${v.maximum})
-    ${_}    throw out_of_range("${base.attr.inst_name(v.name)} too large");
-        % endif
-    % endif
-% if not v.isRequired:
+% if has_numeric_validation_checks:
+        ${capture(emit_numeric_validation_checks, inst_name, v) | indent8}
+% endif
+% endif
     }
+% else:
+% if v.isArray:
+    ${capture(emit_array_validation_checks, inst_name, v) | indent4}
+% else:
+% if has_string_validation_checks:
+    ${capture(emit_string_validation_checks, inst_name, v) | indent4}
+% endif
+% if has_numeric_validation_checks:
+    ${capture(emit_numeric_validation_checks, inst_name, v) | indent4}
+% endif
+% endif
 % endif
 % endfor
 }

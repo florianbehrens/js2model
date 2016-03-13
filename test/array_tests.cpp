@@ -106,4 +106,20 @@ TEST_CASE( "Array type support" ) {
         REQUIRE(obj.to_json().dump() == data.dump());
     }
 
+    SECTION( "Ranged integers with valid values" ) {
+        auto data = testData[10];
+        auto obj = ArrayTest(data);
+        REQUIRE(obj.rangedInts.is_initialized());
+        REQUIRE(obj.rangedInts.get()[0] == 16);
+        REQUIRE(obj.rangedInts.get()[1] == 17);
+        REQUIRE(obj.to_json().dump() == data.dump());
+    }
+
+    SECTION( "Ranged integers with invalid values" ) {
+        auto data = testData[11];
+        auto obj = ArrayTest(data);
+        REQUIRE(obj.rangedInts.is_initialized());
+        REQUIRE_FALSE(obj.is_valid());
+    }
+
 }

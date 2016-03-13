@@ -16,13 +16,14 @@ High
 [x] Remove models.h
 [x] Don't emit empty classes (see Common.cpp)
 [x] Different namespace to avoid conflicts (`schema`)
+[x] Validation checks incorrect for arrays
 
 Medium
 
 [x] Optional parameters should be emitted as boost::optional<T>
 [x] More testing around arrays - not sure that's correct
 [x] Remove `additional_properties` support
-[ ] Emitting empty `is_valid` checks for optionals
+[x] Emitting empty `is_valid` checks for optionals
 [ ] `enum` is a modifier that should work on any type
     works: { "enum": [ "a", "b", c"] }
     fails: { "type": "string",

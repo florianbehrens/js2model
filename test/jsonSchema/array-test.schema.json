@@ -56,6 +56,15 @@
                 },
                 "minItems": 2
             }
+        },
+        "rangedInts": {
+            "type": "array",
+            "items": {
+                "type": "integer",
+                "minItems": 2,
+                "minimum": 16,
+                "maximum": 18
+            }
         }
     }
 }
