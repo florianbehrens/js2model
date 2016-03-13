@@ -287,6 +287,10 @@ ${_}    object["${var_def.json_name}"] = ${inst_name};
     if (${optional_inst_name}.is_initialized()) {
 % endif
 ${emit_assignment(v)}\
+% if not v.isRequired and emit_empty_optionals_as_nulls:
+    } else {
+${_}    object["${v.json_name}"] = Json(nullptr);
+% endif;
 % if not v.isRequired:
     }
 % endif

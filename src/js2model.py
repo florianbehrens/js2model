@@ -42,6 +42,7 @@ def main():
     # parser.add_argument('--additional', action='store_true', default=False,
     #                     help='Include additionalProperties in models')
     parser.add_argument('--novalidate', action='store_true', default=False, help='Skip schema validation')
+    parser.add_argument('--emit-empty-optionals-as-nulls', action='store_true', default=False, help='Output null values for unset optional fields in to_json()')
     parser.add_argument('-o', '--output', default='output', help='Target directory of output files')
     parser.add_argument('--implements', default=None,
                         help='Comma separated list of interface(s)|protocol(s) supported by the generated classes')
@@ -90,7 +91,8 @@ def main():
                                  validate=args.novalidate,
                                  verbose=args.verbose,
                                  skip_deserialization=args.no_deserialize,
-                                 include_dependencies=not args.no_dependencies
+                                 include_dependencies=not args.no_dependencies,
+                                 emit_empty_optionals_as_nulls=args.emit_empty_optionals_as_nulls
     )
 
     generator.generate_models(files)
