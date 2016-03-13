@@ -1,0 +1,32 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "model",
+    "type": "object",
+    "typeName": "Variant",
+    "definitions": {
+        "rgbColor" : {
+            "type": "object",
+            "typeName": "RGBColor",
+            "required": [ "r", "g", "b" ],
+            "properties" : {
+                "r": { "type": "integer", "minimum": 0, "maximum": 255 },
+                "g": { "type": "integer", "minimum": 0, "maximum": 255 },
+                "b": { "type": "integer", "minimum": 0, "maximum": 255 }
+            }
+        },
+        "fillLayer" : {
+            "type": "object",
+            "typeName": "FillLayer",
+            "required": ["type", "color"],
+            "properties" : {
+                "type" : {
+                    "enum": ["fill"]
+                },
+                "color" : { "$ref": "#definitions/rgbColor" }
+            }
+        }
+    },
+    "properties" : {
+        "fill" : { "$ref": "#definitions/fillLayer" }
+    }
+}
