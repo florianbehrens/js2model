@@ -21,9 +21,9 @@ THE SOFTWARE.
 </%doc>
 <%inherit file="base.mako" />
 <%namespace name="base" file="base.mako" />
-<%def name='propertyDecl(variableDef, usePrimitives=False, useOptionals=True)'>\
+<%def name='propertyDecl(variableDef, useOptionals=True)'>\
 <%
-(varType, isRef, itemsType) = base.attr.convertType(variableDef, usePrimitives, useOptionals)
+(varType, isRef, itemsType) = base.attr.convertType(variableDef, useOptionals)
 %>\
     ${varType} ${base.attr.inst_name(variableDef.name)};\
 </%def>\
@@ -71,7 +71,7 @@ superClass = classDef.superClasses[0] if len(classDef.superClasses) else None
 class ${class_name + ((': protected ' + superClass) if superClass else '')}
 {
 public:
-% for e in [x.enum_def for x in classDef.variable_defs if x.enum_def]:
+% for e in [x.type.enum_def for x in classDef.variable_defs if x.type.enum_def]:
 ${enumDecl(e)}
 % endfor
 % for v in classDef.variable_defs:

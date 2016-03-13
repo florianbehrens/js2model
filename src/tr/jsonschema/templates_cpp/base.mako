@@ -50,28 +50,8 @@ Maps for mapping JSON types to Obj C types.
         'integer': 'int',
         'number':  'double',
         'boolean': 'bool',
-        'null':	   'void',
-        'any':	   'void'
-    }
-
-    primitivesTypeMap = {
-        'string':  'std::string',
-        'dict':    'std::unordered_map',
-        'integer': 'int',
-        'number':  'double',
-        'boolean': 'bool',
-        'null':	   'void',
-        'any':	   'void'
-    }
-
-    primitivesTypeIsRef = {
-        'string':  True,
-        'dict':    True,
-        'integer': False,
-        'number':  False,
-        'boolean': False,
-        'null':	   True,
-        'any':	   True
+        'null':    'void',
+        'any':     'void'
     }
 %>\
 <%doc>
@@ -87,38 +67,15 @@ def inst_name(value):
     #return 'm' + normalize_prop_name(value[0].upper() + value[1:])
     return normalize_prop_name(value)
 %>\
-##<%!
-##    def convertJsTypeToObjc(jsType, usePrimitives=False):
-##
-##        if usePrimitives:
-##            if jsType in primitivesTypeMap:
-##                varType = primitivesTypeMap[jsType]
-##                isRef = primitivesTypeIsRef[jsType]
-##            else:
-##                varType = variableDef.type + ' *'
-##                isRef = True
-##        else:
-##            varType = jsType + ' *' if not jsType in typeMap else typeMap[jsType]
-##            isRef = True
-##
-##        return (varType, isRef)
-##%>
 <%doc>
 Convert a JSON type to an Objective C type.
 </%doc>\
 <%!
-    def convertType(variableDef, usePrimitives=False, useOptionals=False):
+    def convertType(variableDef, useOptionals=False):
 
-        if usePrimitives:
-            if variableDef.type in primitivesTypeMap:
-                cppType = primitivesTypeMap[variableDef.type]
-                isRef = primitivesTypeIsRef[variableDef.type]
-            else:
-                cppType = variableDef.type
-                isRef = True
-        else:
-            cppType = variableDef.type if not variableDef.type in typeMap else typeMap[variableDef.type]
-            isRef = True
+        type = variableDef.type
+        cppType = type.name if not type.name in typeMap else typeMap[type.name]
+        isRef = True
 
         if variableDef.isArray:
              varType = "std::vector<%s>" % cppType
@@ -133,26 +90,6 @@ Convert a JSON type to an Objective C type.
 
         return (varType, isRef, itemType)
 %>\
-<%def name='initVarToDefault(variableDef, usePrimitives=False)'>\
-    <%
-    (varType, isRef, itemsType) = convertType(variableDef, usePrimitives)
-    %>\
-    % if not variableDef.default == None:
-    <%
-        propName = variableDef.name
-        ivarName = '_' + propName
-    %>\
-        % if not isRef:
-            ${ivarName} = ${variableDef.default};
-        % elif varType == "NSNumber *":
-            % if varDef.default == False:
-                ${ivarName} = @NO;
-            % elif varDef.default == True:
-                ${ivarName} = @YES;
-            % endif
-        % endif
-    % endif
-</%def>\
 //
 //  ${file_name}
 //

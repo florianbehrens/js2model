@@ -78,30 +78,30 @@ temp_name = v.name + "Temp"
     % if v.isArray:
         assert(${temp_name}.is_array());
         for( const auto array_item : ${temp_name}.array_items() ) {
-        % if v.schema_type == 'string':
+        % if v.type.schema_type == 'string':
             assert(array_item.is_string());
-            % if v.isEnum:
+            % if v.type.isEnum:
             destination_array.emplace_back(string_to_${v.json_name}(array_item.string_value()));
             % else:
             destination_array.emplace_back(array_item.string_value());
             % endif:
-        % elif v.schema_type == 'integer':
+        % elif v.type.schema_type == 'integer':
             assert(array_item.is_number());
             destination_array.emplace_back(int(array_item.number_value()));
-        % elif v.schema_type == 'number':
+        % elif v.type.schema_type == 'number':
             assert(array_item.is_number());
             destination_array.emplace_back(array_item.number_value());
-        % elif v.schema_type == 'boolean':
+        % elif v.type.schema_type == 'boolean':
             assert(array_item.is_bool());
             destination_array.emplace_back(array_item.bool_value());
-        % elif v.schema_type == 'object':
+        % elif v.type.schema_type == 'object':
             assert(array_item.is_object());
-            destination_array.emplace_back(${v.type}(array_item));
+            destination_array.emplace_back(${v.type.name}(array_item));
         % elif v.schema_type == 'array':
             ## TODO: probably need to recursively handle arrays of arrays
             assert(array_item.is_array());
-            vector<${v.type}> item_array;
-            destination_array.emplace_back(${v.type}(item_array));
+            vector<${v.type.name}> item_array;
+            destination_array.emplace_back(${v.type.name}(item_array));
         % endif
         }
         % if not v.isRequired:
@@ -109,25 +109,25 @@ temp_name = v.name + "Temp"
         ${inst_name} = destination_array;
         % endif
     % else:
-        % if v.schema_type == 'string':
+        % if v.type.schema_type == 'string':
         assert(${temp_name}.is_string());
-            % if v.isEnum:
+            % if v.type.isEnum:
         ${inst_name} = string_to_${v.json_name}(${temp_name}.string_value());
             % else:
         ${inst_name} = ${temp_name}.string_value();
             % endif
-        % elif v.schema_type == 'integer':
+        % elif v.type.schema_type == 'integer':
         assert(${temp_name}.is_number());
         ${inst_name} = int(${temp_name}.number_value());
-        % elif v.schema_type == 'number':
+        % elif v.type.schema_type == 'number':
         assert(${temp_name}.is_number());
         ${inst_name} = ${temp_name}.number_value();
-        % elif v.schema_type == 'boolean':
+        % elif v.type.schema_type == 'boolean':
         assert(${temp_name}.is_bool());
         ${inst_name} = ${temp_name}.bool_value();
-        % elif v.schema_type == 'object':
+        % elif v.type.schema_type == 'object':
         assert(${temp_name}.is_object());
-        ${inst_name} = ${v.type}(${temp_name});
+        ${inst_name} = ${v.type.name}(${temp_name});
         % endif
     % endif
     }
@@ -263,22 +263,22 @@ _ = "" if v.isRequired else "    "
 %>\
 <%def name='emit_assignment(var_def)'>\
 % if var_def.isArray:
-    % if var_def.isEnum:
+    % if var_def.type.isEnum:
 ${_}    {
 ${_}        auto enumStringArray = Json::array(${inst_name}.size());
 ${_}        std::transform(${inst_name}.begin(),
 ${_}                       ${inst_name}.end(),
 ${_}                       enumStringArray.begin(),
 ${_}                       [](const auto &val) {
-${_}                           return ${var_def.enum_def.plain_name}_to_string(val);
+${_}                           return ${var_def.type.enum_def.plain_name}_to_string(val);
 ${_}                       });
 ${_}        object["${var_def.json_name}"] = enumStringArray;
 ${_}    }
     % else:
 ${_}    object["${var_def.json_name}"] = Json(${inst_name});
     % endif:
-% elif var_def.isEnum:
-${_}    object["${var_def.json_name}"] = ${var_def.enum_def.plain_name}_to_string(${inst_name});
+% elif var_def.type.isEnum:
+${_}    object["${var_def.json_name}"] = ${var_def.type.enum_def.plain_name}_to_string(${inst_name});
 % else:
 ${_}    object["${var_def.json_name}"] = ${inst_name};
 % endif
@@ -299,7 +299,7 @@ ${_}    object["${v.json_name}"] = Json(nullptr);
     return Json(object);
 }
 
-% for enumDef in [x.enum_def for x in classDef.variable_defs if x.enum_def]:
+% for enumDef in [x.type.enum_def for x in classDef.variable_defs if x.type.enum_def]:
 std::string ${class_name}::${enumDef.plain_name}_to_string(const ${class_name}::${enumDef.name} &val)
 {
     switch (val) {
