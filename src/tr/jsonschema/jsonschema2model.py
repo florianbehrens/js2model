@@ -202,7 +202,6 @@ class EnumDef(object):
 
         # Class name
         self.name = None
-        self.type = 'integer'
         self.values = []
         self.header_file = None
 
@@ -210,7 +209,6 @@ class EnumDef(object):
         return {
             'name': self.name,
             'plain_name': self.plain_name,
-            'type': self.type,
             'values': self.values,
             'header_file': self.header_file
             }
@@ -821,7 +819,6 @@ class JsonSchema2Model(object):
                                                             template_files.enum_template)
             # TODO: should I check to see if the enum is already in the models dict?
 
-            enum_def.type = 'int'
             enum_def.values = schema_object[JsonSchemaKeywords.ENUM]
 
             self.enums[enum_def.name] = enum_def
