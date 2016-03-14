@@ -82,7 +82,7 @@ temp_name = v.name + "Temp"
             assert(array_item.is_object());
             assert(array_item["type"].is_string());
             % for json_type, concrete_type in v.variantTypeMap().iteritems():
-            if (array_item["type"] == json_type) {
+            ${"if" if loop.first else "else if"} (array_item["type"] == "${json_type}") {
                 destination_array.emplace_back(${concrete_type}(array_item));
             }
             % endfor
