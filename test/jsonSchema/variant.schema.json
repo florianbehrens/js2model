@@ -37,7 +37,7 @@
                 "type" : {
                     "enum": ["photo"]
                 },
-                "photo" : { "$ref": "#definitions/blobId" }
+                "blobId" : { "$ref": "#definitions/blobId" }
             }
         }
     },

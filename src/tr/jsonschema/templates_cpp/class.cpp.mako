@@ -215,7 +215,7 @@ class ${var_def.name}_validator : public boost::static_visitor<void>
 {
 public:
 % for json_type, concrete_type in v.variantTypeMap().iteritems():
-    void operator()(const ${concrete_type} &value) {
+    void operator()(const ${concrete_type} &value) const {
         value.check_valid();
     }
 % endfor
@@ -288,51 +288,70 @@ for (const auto &arrayItem : ${inst_name}) {
 }
 
 Json ${class_name}::to_json() const {
-
     assert(is_valid());
-
     auto object = Json::object();
-
 % for v in classDef.variable_defs:
 <%\
 optional_inst_name = "this->" + base.attr.inst_name(v.name)
 inst_name = optional_inst_name if v.isRequired else optional_inst_name + ".get()"
-_ = "" if v.isRequired else "    "
 %>\
 <%def name='emit_assignment(var_def)'>\
+% if var_def.isVariant:
+class ${var_def.name}_to_json : public boost::static_visitor<Json>
+{
+public:
+% for json_type, concrete_type in v.variantTypeMap().iteritems():
+    Json operator()(const ${concrete_type} &value) const {
+        return value.to_json();
+    }
+% endfor
+};
+% endif
 % if var_def.isArray:
-    % if var_def.type.isEnum:
-${_}    {
-${_}        auto enumStringArray = Json::array(${inst_name}.size());
-${_}        std::transform(${inst_name}.begin(),
-${_}                       ${inst_name}.end(),
-${_}                       enumStringArray.begin(),
-${_}                       [](const auto &val) {
-${_}                           return ${var_def.type.enum_def.plain_name}_to_string(val);
-${_}                       });
-${_}        object["${var_def.json_name}"] = enumStringArray;
-${_}    }
-    % else:
-${_}    object["${var_def.json_name}"] = Json(${inst_name});
-    % endif:
+% if var_def.isVariant:
+{
+    auto jsonArray = Json::array(${inst_name}.size());
+    std::transform(${inst_name}.begin(),
+                   ${inst_name}.end(),
+                   jsonArray.begin(),
+                   [](const auto &val) {
+                       return boost::apply_visitor(${var_def.name}_to_json(), val);
+                   });
+    object["${var_def.json_name}"] = jsonArray;
+}
 % elif var_def.type.isEnum:
-${_}    object["${var_def.json_name}"] = ${var_def.type.enum_def.plain_name}_to_string(${inst_name});
+{
+    auto enumStringArray = Json::array(${inst_name}.size());
+    std::transform(${inst_name}.begin(),
+                   ${inst_name}.end(),
+                   enumStringArray.begin(),
+                   [](const auto &val) {
+                       return ${var_def.type.enum_def.plain_name}_to_string(val);
+                   });
+    object["${var_def.json_name}"] = enumStringArray;
+}
 % else:
-${_}    object["${var_def.json_name}"] = ${inst_name};
+object["${var_def.json_name}"] = Json(${inst_name});
+% endif
+% elif var_def.isVariant:
+object["${var_def.json_name}"] = boost::apply_visitor(${var_def.name}_to_json(), ${inst_name});
+% elif var_def.type.isEnum:
+object["${var_def.json_name}"] = ${var_def.type.enum_def.plain_name}_to_string(${inst_name});
+% else:
+object["${var_def.json_name}"] = ${inst_name};
 % endif
 </%def>\
 % if not v.isRequired:
     if (${optional_inst_name}.is_initialized()) {
-% endif
-${emit_assignment(v)}\
-% if not v.isRequired and emit_empty_optionals_as_nulls:
+        ${capture(emit_assignment, v) | indent8}
+% if emit_empty_optionals_as_nulls:
     } else {
-${_}    object["${v.json_name}"] = Json(nullptr);
-% endif;
-% if not v.isRequired:
-    }
+        object["${v.json_name}"] = Json(nullptr);
 % endif
-
+    }
+% else:
+    ${capture(emit_assignment, v) | indent4}
+% endif
 % endfor
     return Json(object);
 }

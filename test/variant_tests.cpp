@@ -36,5 +36,16 @@ TEST_CASE( "Test" ) {
         REQUIRE(fillLayer.color.g == 255);
         REQUIRE(fillLayer.color.b == 0);
         REQUIRE(obj.is_valid());
+        REQUIRE(obj.to_json().dump() == testData[0].dump());
+    }
+
+    SECTION( "Photo layer" ) {
+        auto obj = Variant(testData[1]);
+        const auto &photoLayer = boost::get<PhotoLayer>(obj.layer);
+        REQUIRE(photoLayer.type == PhotoLayer::Type::Photo);
+        REQUIRE(PhotoLayer::type_to_string(photoLayer.type) == "photo");
+        REQUIRE(photoLayer.blobId == "xhuN8r50BDX09Kq-kOcf1cZvzd2GKoc4DiN5fiMARcPEDrO9");
+        REQUIRE(obj.is_valid());
+        REQUIRE(obj.to_json().dump() == testData[1].dump());
     }
 }
