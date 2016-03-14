@@ -39,15 +39,23 @@
                 },
                 "blobId" : { "$ref": "#definitions/blobId" }
             }
-        }
-    },
-    "properties" : {
+        },
         "layer" : {
             "oneOf" : [
                 { "$ref": "#definitions/fillLayer" },
                 { "$ref": "#definitions/photoLayer" }
             ]
+        },
+        "layerArray" : {
+            "type" : "array",
+            "items" : { "$ref": "#definitions/layer" }
         }
     },
-    "required": ["layer"]
+    "properties" : {
+        "requiredLayer" : { "$ref": "#definitions/layer" },
+        "optionalLayer" : { "$ref": "#definitions/layer" },
+        "requiredLayers" : { "$ref": "#definitions/layerArray" },
+        "optionalLayers" : { "$ref": "#definitions/layerArray" }
+    },
+    "required": ["requiredLayer", "requiredLayers"]
 }

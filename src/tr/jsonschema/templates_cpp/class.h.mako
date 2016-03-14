@@ -85,6 +85,16 @@ ${enumDecl(e)}
 % endfor
 % for v in classDef.variable_defs:
 ${propertyDecl(v)}
+% if v.isVariant:
+<%
+variant_type_return = "std::string" if v.isRequired else "boost::optional<std::string>"
+%>\
+% if v.isArray:
+    ${variant_type_return} ${base.attr.inst_name(v.name)}Type(size_t pos) const;
+% else:
+    ${variant_type_return} ${base.attr.inst_name(v.name)}Type() const;
+% endif
+% endif
 % endfor
 % if include_additional_properties:
     std::unordered_map<std::string, std::string> additionalProperties;

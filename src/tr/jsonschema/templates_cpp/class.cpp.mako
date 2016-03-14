@@ -356,6 +356,43 @@ object["${var_def.json_name}"] = ${inst_name};
     return Json(object);
 }
 
+% for v in classDef.variable_defs:
+% if v.isVariant:
+<%
+inst_name = base.attr.inst_name(v.name)
+item_name = "item" if v.isArray else inst_name
+accessor = item_name if v.isRequired else item_name + ".get()"
+variant_type_return = "std::string" if v.isRequired else "boost::optional<std::string>"
+%>\
+% if v.isArray:
+${variant_type_return} ${class_name}::${inst_name}Type(size_t pos) const
+% else:
+${variant_type_return} ${class_name}::${inst_name}Type() const
+% endif
+{
+% if not v.isRequired:
+    if (!${inst_name}.is_initialized()) {
+        return boost::none;
+    }
+% endif
+% if v.isArray:
+    const auto &item = ${inst_name if v.isRequired else inst_name + ".get()"}.at(pos);
+% endif
+    class ${inst_name}_get_type : public boost::static_visitor<string>
+    {
+    public:
+    % for json_type, concrete_type in v.variantTypeMap().iteritems():
+        string operator()(const ${concrete_type} &value) const {
+            return ${concrete_type}::type_to_string(value.type);
+        }
+    % endfor
+    };
+    return boost::apply_visitor(${inst_name}_get_type(), ${item_name if v.isRequired or v.isArray else item_name + ".get()"});
+}
+
+% endif
+% endfor
+
 % for enumDef in [x.type.enum_def for x in classDef.variable_defs if x.type.enum_def]:
 std::string ${class_name}::${enumDef.plain_name}_to_string(const ${class_name}::${enumDef.name} &val)
 {
