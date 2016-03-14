@@ -14,6 +14,10 @@
                 "b": { "type": "integer", "minimum": 0, "maximum": 255 }
             }
         },
+        "blobId" : {
+            "type": "string",
+            "pattern": "^[0-9A-Za-z\\-_]{48}$"
+        },
         "fillLayer" : {
             "type": "object",
             "typeName": "FillLayer",
@@ -24,9 +28,26 @@
                 },
                 "color" : { "$ref": "#definitions/rgbColor" }
             }
+        },
+        "photoLayer" : {
+            "type": "object",
+            "typeName": "PhotoLayer",
+            "required": ["type", "blobId"],
+            "properties" : {
+                "type" : {
+                    "enum": ["photo"]
+                },
+                "photo" : { "$ref": "#definitions/blobId" }
+            }
         }
     },
     "properties" : {
-        "fill" : { "$ref": "#definitions/fillLayer" }
-    }
+        "layer" : {
+            "oneOf" : [
+                { "$ref": "#definitions/fillLayer" },
+                { "$ref": "#definitions/photoLayer" }
+            ]
+        }
+    },
+    "required": ["layer"]
 }

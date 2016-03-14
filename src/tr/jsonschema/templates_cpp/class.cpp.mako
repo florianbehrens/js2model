@@ -78,7 +78,15 @@ temp_name = v.name + "Temp"
     % if v.isArray:
         assert(${temp_name}.is_array());
         for( const auto array_item : ${temp_name}.array_items() ) {
-        % if v.type.schema_type == 'string':
+        % if v.isVariant:
+            assert(array_item.is_object());
+            assert(array_item["type"].is_string());
+            % for json_type, concrete_type in v.variantTypeMap().iteritems():
+            if (array_item["type"] == json_type) {
+                destination_array.emplace_back(${concrete_type}(array_item));
+            }
+            % endfor
+        % elif v.type.schema_type == 'string':
             assert(array_item.is_string());
             % if v.type.isEnum:
             destination_array.emplace_back(string_to_${v.json_name}(array_item.string_value()));
@@ -109,7 +117,15 @@ temp_name = v.name + "Temp"
         ${inst_name} = destination_array;
         % endif
     % else:
-        % if v.type.schema_type == 'string':
+        % if v.isVariant:
+        assert(${temp_name}.is_object());
+        assert(${temp_name}["type"].is_string());
+        % for json_type, concrete_type in v.variantTypeMap().iteritems():
+        ${"if" if loop.first else "else if"} (${temp_name}["type"] == "${json_type}") {
+            ${inst_name} = ${concrete_type}(${temp_name});
+        }
+        % endfor
+        % elif v.type.schema_type == 'string':
         assert(${temp_name}.is_string());
             % if v.type.isEnum:
         ${inst_name} = string_to_${v.json_name}(${temp_name}.string_value());
@@ -149,7 +165,6 @@ void ${class_name}::check_valid() const {
 <%
 optional_inst_name = "this->" + base.attr.inst_name(v.name)
 inst_name = optional_inst_name if v.isRequired else optional_inst_name + ".get()"
-_ = "" if v.isRequired else "    "
 
 has_array_validation_checks = (v.minItems is not None or
                                v.maxItems is not None)
@@ -163,7 +178,8 @@ has_numeric_validation_checks = (v.minimum is not None or
 
 has_any_validation_checks = (has_array_validation_checks or
                              has_string_validation_checks or
-                             has_numeric_validation_checks)
+                             has_numeric_validation_checks or
+                             v.isVariant)
 %>\
 <%def name='emit_string_validation_checks(inst_name, var_def)'>\
 % if var_def.minLength is not None:
@@ -194,6 +210,19 @@ if (${inst_name} ${op} ${var_def.maximum})
 % endif
 </%def>\
 \
+<%def name='emit_variant_validation_checks(inst_name, var_def)'>\
+class ${var_def.name}_validator : public boost::static_visitor<void>
+{
+public:
+% for json_type, concrete_type in v.variantTypeMap().iteritems():
+    void operator()(const ${concrete_type} &value) {
+        value.check_valid();
+    }
+% endfor
+};
+boost::apply_visitor(${var_def.name}_validator(), ${inst_name});
+</%def>\
+\
 <%def name='emit_array_validation_checks(inst_name, var_def)'>\
 % if has_array_validation_checks:
 % if var_def.minItems is not None:
@@ -205,13 +234,16 @@ if (${inst_name}.size() > ${var_def.maxItems})
     throw out_of_range("Array ${base.attr.inst_name(var_def.name)} has too many items");
 % endif
 % endif
-% if has_string_validation_checks or has_numeric_validation_checks:
+% if has_string_validation_checks or has_numeric_validation_checks or var_def.isVariant:
 for (const auto &arrayItem : ${inst_name}) {
 % if has_string_validation_checks:
     ${capture(emit_string_validation_checks, "arrayItem", var_def) | indent4}
 % endif
 % if has_numeric_validation_checks:
     ${capture(emit_numeric_validation_checks, "arrayItem", var_def) | indent4}
+% endif
+% if var_def.isVariant:
+    ${capture(emit_variant_validation_checks, "arrayItem", var_def) | indent4}
 % endif
 }
 % endif
@@ -232,6 +264,9 @@ for (const auto &arrayItem : ${inst_name}) {
 % if has_numeric_validation_checks:
         ${capture(emit_numeric_validation_checks, inst_name, v) | indent8}
 % endif
+% if v.isVariant:
+    ${capture(emit_variant_validation_checks, inst_name, v) | indent8}
+% endif
 % endif
     }
 % else:
@@ -243,6 +278,9 @@ for (const auto &arrayItem : ${inst_name}) {
 % endif
 % if has_numeric_validation_checks:
     ${capture(emit_numeric_validation_checks, inst_name, v) | indent4}
+% endif
+% if v.isVariant:
+    ${capture(emit_variant_validation_checks, inst_name, v) | indent4}
 % endif
 % endif
 % endif

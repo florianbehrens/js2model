@@ -121,6 +121,7 @@ class JsonSchemaKeywords(object):
     PROPERTIES = 'properties'
     EXTENDS = 'extends'
     ADDITIONAL_PROPERTIES = 'additionalProperties'
+    ONE_OF = 'oneOf'
 
     # Extended keywords
     SUPERCLASS = '#superclass'
@@ -171,6 +172,8 @@ class ClassDef(object):
         for var_def in self.variable_defs:
             if var_def.type.header_file:
                 dependencies.add(var_def.type.header_file)
+            if var_def.isVariant:
+                dependencies.update(v.type.header_file for v in var_def.variantDefs)
 
         return dependencies if len(dependencies) else None
 
@@ -279,10 +282,11 @@ class VariableDef(object):
         self.format = None
         self.isArray = False
         self.isVariant = False
-        self.variantTypes = []
+        self.variantDefs = []
 
     def to_dict(self):
         base_dict = {
+            'type': self.type.to_dict(),
             'name': self.name,
             'json_name': self.json_name,
             'visibility': self.visibility,
@@ -304,9 +308,18 @@ class VariableDef(object):
             'format': self.format,
             'isArray': self.isArray,
             'isVariant': self.isVariant,
-            'variantTypes': self.variantTypes,
+            'variantDefs': self.variantDefs,
         }
         return {k: v for k, v in base_dict.items() if v != None}
+
+    def variantTypeMap(self):
+        if not self.isVariant:
+            return {}
+        map = {}
+        for v in self.variantDefs:
+            map[v.json_name] = v.type.name
+
+        return map
 
     def __repr__(self):
         return pprint.pformat(self.to_dict())
@@ -826,6 +839,21 @@ class JsonSchema2Model(object):
             var_def.type.name = enum_def.name
             var_def.type.isEnum = True
             var_def.type.enum_def = enum_def
+
+        #
+        # Variant types
+        #
+        elif JsonSchemaKeywords.ONE_OF in schema_object:
+            var_def.isVariant = True
+            for variant_type in schema_object[JsonSchemaKeywords.ONE_OF]:
+                # import pdb; pdb.set_trace()
+                json_type_id = variant_type['properties']['type']['enum'][0]
+                scope.append(json_type_id)
+                variant_var_def = self.create_model(variant_type, scope)
+                scope.pop
+                assert variant_var_def.type.schema_type == "object"
+                variant_var_def.isRequired = True
+                var_def.variantDefs.append(variant_var_def)
         else:
             logger.warning("Unknown schema type in %s", schema_object)
 

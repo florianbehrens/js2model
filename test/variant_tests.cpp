@@ -27,12 +27,14 @@ static Json LoadTestData() {
 TEST_CASE( "Test" ) {
     auto testData = LoadTestData();
 
-    SECTION( "Test" ) {
+    SECTION( "Fill layer" ) {
         auto obj = Variant(testData[0]);
-        REQUIRE(obj.fill.get().type == FillLayer::Type::Fill);
-        REQUIRE(obj.fill.get().color.r == 255);
-        REQUIRE(obj.fill.get().color.g == 255);
-        REQUIRE(obj.fill.get().color.b == 0);
+        const auto &fillLayer = boost::get<FillLayer>(obj.layer);
+        REQUIRE(fillLayer.type == FillLayer::Type::Fill);
+        REQUIRE(FillLayer::type_to_string(fillLayer.type) == "fill");
+        REQUIRE(fillLayer.color.r == 255);
+        REQUIRE(fillLayer.color.g == 255);
+        REQUIRE(fillLayer.color.b == 0);
         REQUIRE(obj.is_valid());
     }
 }

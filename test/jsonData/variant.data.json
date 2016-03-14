@@ -1,11 +1,19 @@
 [
     {
-        "fill": {
+        "layer": {
             "type": "fill",
             "color": {
                 "r": 255,
                 "g": 255,
                 "b": 0
+            }
+        }
+    },
+    {
+        "layer": {
+            "type": "photo",
+            "photo": {
+                "blobId": "xhuN8r50BDX09Kq-kOcf1cZvzd2GKoc4DiN5fiMARcPEDrO9"
             }
         }
     }

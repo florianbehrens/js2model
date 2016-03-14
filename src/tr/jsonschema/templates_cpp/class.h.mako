@@ -21,9 +21,9 @@ THE SOFTWARE.
 </%doc>
 <%inherit file="base.mako" />
 <%namespace name="base" file="base.mako" />
-<%def name='propertyDecl(variableDef, useOptionals=True)'>\
+<%def name='propertyDecl(variableDef)'>\
 <%
-(varType, isRef, itemsType) = base.attr.convertType(variableDef, useOptionals)
+varType = base.attr.convertType(variableDef)
 %>\
     ${varType} ${base.attr.inst_name(variableDef.name)};\
 </%def>\
@@ -39,7 +39,16 @@ THE SOFTWARE.
 <%block name="code">
 #pragma once
 
+<%
+has_optionals = not all([v.isRequired for v in classDef.variable_defs])
+has_variants = any([v.isVariant for v in classDef.variable_defs])
+%>\
+% if has_optionals:
 #include <boost/optional.hpp>
+% endif
+% if has_variants:
+#include <boost/variant.hpp>
+% endif
 #include <json11/json11.hpp>
 #include <string>
 #include <unordered_map>
@@ -86,13 +95,12 @@ public:
     ${class_name}(const ${class_name} &other) = default;
     ${class_name}(const json11::Json &value);
 
+    /// Returns true if the contents of this object match the schema
     bool is_valid() const;
-
-    json11::Json to_json() const;
-
-protected:
+    /// Throws if the contents of this object do not match the schema
     void check_valid() const;
 
+    json11::Json to_json() const;
 }; // class ${class_name}
 
 % for ns in reversed(namespace.split('::')):
