@@ -121,11 +121,10 @@ class JsonSchemaKeywords(object):
     PROPERTIES = 'properties'
     EXTENDS = 'extends'
     ADDITIONAL_PROPERTIES = 'additionalProperties'
+    ONE_OF = 'oneOf'
 
     # Extended keywords
     SUPERCLASS = '#superclass'
-    MODEL_TYPE = '#modeltype'
-    MODEL_DEFAULT = '#modeldefault'
 
     def __setattr__(self, *_):
         raise ValueError("Trying to change a constant value", self)
@@ -171,8 +170,10 @@ class ClassDef(object):
         # dependencies.add(dep)
 
         for var_def in self.variable_defs:
-            if var_def.header_file:
-                dependencies.add(var_def.header_file)
+            if var_def.type.header_file:
+                dependencies.add(var_def.type.header_file)
+            if var_def.isVariant:
+                dependencies.update(v.type.header_file for v in var_def.variantDefs)
 
         return dependencies if len(dependencies) else None
 
@@ -204,7 +205,6 @@ class EnumDef(object):
 
         # Class name
         self.name = None
-        self.type = 'integer'
         self.values = []
         self.header_file = None
 
@@ -212,7 +212,6 @@ class EnumDef(object):
         return {
             'name': self.name,
             'plain_name': self.plain_name,
-            'type': self.type,
             'values': self.values,
             'header_file': self.header_file
             }
@@ -221,71 +220,21 @@ class EnumDef(object):
         return pprint.pformat(self.to_dict())
 
 
-class VariableDef(object):
-    ACCESS_PUBLIC = "public"
-    ACCESS_PRIVATE = "private"
-    ACCESS_PROTECTED = "protected"
-
-    STORAGE_STATIC = "static"
-    STORAGE_IVAR = "ivar"
-
-    def __init__(self, name, json_name=None):
+class TypeDef(object):
+    def __init__(self):
         self.schema_type = JsonSchemaTypes.STRING
-        self.type = JsonSchemaTypes.INTEGER
-        self.model_type = None
-        self.name = name
-        self.json_name = json_name if json_name else name
+        self.name = JsonSchemaTypes.STRING
         self.header_file = None
-        self.visibility = VariableDef.ACCESS_PROTECTED
-        self.storage = VariableDef.STORAGE_IVAR
-        self.default = None
-        self.model_default = None
-        self.enum_def = None
-        self.isArray = False
         self.isEnum = False
-        self.isRequired = False
-        self.uniqueItems = False
-        self.maxItems = None
-        self.minItems = None
-        self.maximum = None
-        self.minimum = None
-        self.exclusiveMaximum = False
-        self.exclusiveMinimum = False
-        self.maxLength = None
-        self.minLength = None
-        self.pattern = None
-        self.title = None
-        self.description = None
-        self.format = None
+        self.enum_def = None
 
     def to_dict(self):
         base_dict = {
             'schema_type': self.schema_type,
-            'type': self.type,
-            'model_type': self.model_type,
             'name': self.name,
-            'json_name': self.json_name,
             'header_file': self.header_file,
-            'visibility': self.visibility,
-            'storage': self.storage,
-            'default': self.default,
-            'model_default': self.model_default,
-            'isArray': self.isArray,
             'isEnum': self.isEnum,
-            'isRequired': self.isRequired,
-            'uniqueItems': self.uniqueItems,
-            'maxItems': self.maxItems,
-            'minItems': self.minItems,
-            'maximum': self.maximum,
-            'minimum': self.minimum,
-            'exclusiveMaximum': self.exclusiveMaximum,
-            'exclusiveMinimum': self.exclusiveMinimum,
-            'maxLength': self.maxLength,
-            'minLength': self.minLength,
-            'pattern': self.pattern,
-            'title': self.title,
-            'description': self.description,
-            'format': self.format,
+            'enum_def': self.enum_def
         }
         return {k: v for k, v in base_dict.items() if v != None}
 
@@ -300,6 +249,80 @@ class VariableDef(object):
             return [t for t in self.schema_type if t != JsonSchemaTypes.NULL][0]
         else:
             return self.schema_type
+
+
+class VariableDef(object):
+    ACCESS_PUBLIC = "public"
+    ACCESS_PRIVATE = "private"
+    ACCESS_PROTECTED = "protected"
+
+    STORAGE_STATIC = "static"
+    STORAGE_IVAR = "ivar"
+
+    def __init__(self, name, json_name=None):
+        self.type = TypeDef()
+        self.name = name
+        self.json_name = json_name if json_name else name
+        self.visibility = VariableDef.ACCESS_PROTECTED
+        self.storage = VariableDef.STORAGE_IVAR
+        self.default = None
+        self.isRequired = False
+        self.uniqueItems = False
+        self.maxItems = None
+        self.minItems = None
+        self.maximum = None
+        self.minimum = None
+        self.exclusiveMaximum = False
+        self.exclusiveMinimum = False
+        self.maxLength = None
+        self.minLength = None
+        self.pattern = None
+        self.title = None
+        self.description = None
+        self.format = None
+        self.isArray = False
+        self.isVariant = False
+        self.variantDefs = []
+
+    def to_dict(self):
+        base_dict = {
+            'type': self.type.to_dict(),
+            'name': self.name,
+            'json_name': self.json_name,
+            'visibility': self.visibility,
+            'storage': self.storage,
+            'default': self.default,
+            'isRequired': self.isRequired,
+            'uniqueItems': self.uniqueItems,
+            'maxItems': self.maxItems,
+            'minItems': self.minItems,
+            'maximum': self.maximum,
+            'minimum': self.minimum,
+            'exclusiveMaximum': self.exclusiveMaximum,
+            'exclusiveMinimum': self.exclusiveMinimum,
+            'maxLength': self.maxLength,
+            'minLength': self.minLength,
+            'pattern': self.pattern,
+            'title': self.title,
+            'description': self.description,
+            'format': self.format,
+            'isArray': self.isArray,
+            'isVariant': self.isVariant,
+            'variantDefs': self.variantDefs,
+        }
+        return {k: v for k, v in base_dict.items() if v != None}
+
+    def variantTypeMap(self):
+        if not self.isVariant:
+            return {}
+        map = {}
+        for v in self.variantDefs:
+            map[v.json_name] = v.type.name
+
+        return map
+
+    def __repr__(self):
+        return pprint.pformat(self.to_dict())
 
 
 def whitespace_to_camel_case(matched):
@@ -346,17 +369,12 @@ class LanguageConventions(object):
 class TemplateManager(object):
     def __init__(self):
         self.lang_templates = {
-            'objc': LanguageTemplates(header_template="class.h.mako", impl_template="class.m.mako",
-                                      enum_template='enum.h.mako', global_templates=["models.h.mako"]),
             'cpp': LanguageTemplates(header_template="class.h.mako", impl_template="class.cpp.mako",
                                      enum_template='enum.h.mako', global_templates=["models.h.mako"]),
-            'py': LanguageTemplates(global_templates=["models.py.mako"]),
         }
 
         self.lang_conventions = {
-            'objc': LanguageConventions(),
             'cpp': LanguageConventions(cap_class_name=True, use_prefix=False),
-            'py': LanguageConventions(use_prefix=False, ivar_name_convention=LanguageConventions.NAME_UNDERBAR),
         }
 
     def get_template_lookup(self, language):
@@ -613,7 +631,7 @@ class JsonSchema2Model(object):
             extended = False
             if JsonSchemaKeywords.EXTENDS in schema_object:
                 prop_var_def = self.create_model(schema_object[JsonSchemaKeywords.EXTENDS], scope)
-                class_def.superClasses = [prop_var_def.type]
+                class_def.superClasses = [prop_var_def.type.name]
                 extended = True
 
             elif JsonSchemaKeywords.SUPERCLASS in schema_object:
@@ -727,9 +745,6 @@ class JsonSchema2Model(object):
         if JsonSchemaKeywords.DEFAULT in schema_object:
             var_def.default = schema_object[JsonSchemaKeywords.DEFAULT]
 
-        if JsonSchemaKeywords.MODEL_DEFAULT in schema_object:
-            var_def.model_default = schema_object[JsonSchemaKeywords.MODEL_DEFAULT]
-
         if JsonSchemaKeywords.FORMAT in schema_object:
             var_def.format = schema_object[JsonSchemaKeywords.FORMAT]
 
@@ -737,16 +752,13 @@ class JsonSchema2Model(object):
 
             schema_type = schema_object[JsonSchemaKeywords.TYPE]
 
-            var_def.schema_type = schema_type
-
-            if JsonSchemaKeywords.MODEL_TYPE in schema_object:
-                var_def.model_type = schema_object[JsonSchemaKeywords.MODEL_TYPE]
+            var_def.type.schema_type = schema_type
 
             if schema_type == JsonSchemaTypes.OBJECT:
 
                 class_def = self.create_class_def(schema_object, scope)
-                var_def.type = class_def.name
-                var_def.header_file = class_def.header_file
+                var_def.type.name = class_def.name
+                var_def.type.header_file = class_def.header_file
 
             elif schema_type == JsonSchemaTypes.ARRAY:
 
@@ -770,7 +782,7 @@ class JsonSchema2Model(object):
                 var_def.isArray = True
 
             elif isinstance(schema_type, basestring):
-                var_def.type = schema_type
+                var_def.type.name = schema_type
 
             #
             # Union types
@@ -787,13 +799,13 @@ class JsonSchema2Model(object):
                 #
                 if len(schema_type) == 2:
                     if JsonSchemaTypes.NULL in schema_type:
-                        var_def.type = [t for t in schema_type if t != JsonSchemaTypes.NULL][0]
+                        var_def.type.name = [t for t in schema_type if t != JsonSchemaTypes.NULL][0]
                         logger.warning("Schema using '%s' from %s for 'type' of variable '%s'.",
-                                       var_def.effective_schema_type(), schema_type, name)
+                                       var_def.type.effective_schema_type(), schema_type, name)
                     # elif JsonSchemaTypes.OBJECT in schema_type and JsonSchemaTypes.ARRAY in schema_type:
-                    #     var_def.type = [t for t in schema_type if t != JsonSchemaTypes.ARRAY][0]
+                    #     var_def.type.name = [t for t in schema_type if t != JsonSchemaTypes.ARRAY][0]
                     #     logger.warning("Schema using '%s' from %s for 'type' of variable '%s'.",
-                    #                    var_def.effective_schema_type(), schema_type, name)
+                    #                    var_def.type.effective_schema_type(), schema_type, name)
                     else:
                         # TODO: handle this case
                         logger.warning("Complex union types not currently supported")
@@ -820,14 +832,28 @@ class JsonSchema2Model(object):
                                                             template_files.enum_template)
             # TODO: should I check to see if the enum is already in the models dict?
 
-            enum_def.type = 'int'
             enum_def.values = schema_object[JsonSchemaKeywords.ENUM]
 
             self.enums[enum_def.name] = enum_def
 
-            var_def.type = enum_def.name
-            var_def.isEnum = True
-            var_def.enum_def = enum_def
+            var_def.type.name = enum_def.name
+            var_def.type.isEnum = True
+            var_def.type.enum_def = enum_def
+
+        #
+        # Variant types
+        #
+        elif JsonSchemaKeywords.ONE_OF in schema_object:
+            var_def.isVariant = True
+            for variant_type in schema_object[JsonSchemaKeywords.ONE_OF]:
+                # import pdb; pdb.set_trace()
+                json_type_id = variant_type['properties']['type']['enum'][0]
+                scope.append(json_type_id)
+                variant_var_def = self.create_model(variant_type, scope)
+                scope.pop
+                assert variant_var_def.type.schema_type == "object"
+                variant_var_def.isRequired = True
+                var_def.variantDefs.append(variant_var_def)
         else:
             logger.warning("Unknown schema type in %s", schema_object)
 

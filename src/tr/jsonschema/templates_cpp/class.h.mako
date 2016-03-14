@@ -21,9 +21,9 @@ THE SOFTWARE.
 </%doc>
 <%inherit file="base.mako" />
 <%namespace name="base" file="base.mako" />
-<%def name='propertyDecl(variableDef, usePrimitives=False, useOptionals=True)'>\
+<%def name='propertyDecl(variableDef)'>\
 <%
-(varType, isRef, itemsType) = base.attr.convertType(variableDef, usePrimitives, useOptionals)
+varType = base.attr.convertType(variableDef)
 %>\
     ${varType} ${base.attr.inst_name(variableDef.name)};\
 </%def>\
@@ -39,7 +39,16 @@ THE SOFTWARE.
 <%block name="code">
 #pragma once
 
+<%
+has_optionals = not all([v.isRequired for v in classDef.variable_defs])
+has_variants = any([v.isVariant for v in classDef.variable_defs])
+%>\
+% if has_optionals:
 #include <boost/optional.hpp>
+% endif
+% if has_variants:
+#include <boost/variant.hpp>
+% endif
 #include <json11/json11.hpp>
 #include <string>
 #include <unordered_map>
@@ -71,11 +80,21 @@ superClass = classDef.superClasses[0] if len(classDef.superClasses) else None
 class ${class_name + ((': protected ' + superClass) if superClass else '')}
 {
 public:
-% for e in [x.enum_def for x in classDef.variable_defs if x.enum_def]:
+% for e in [x.type.enum_def for x in classDef.variable_defs if x.type.enum_def]:
 ${enumDecl(e)}
 % endfor
 % for v in classDef.variable_defs:
 ${propertyDecl(v)}
+% if v.isVariant:
+<%
+variant_type_return = "std::string" if v.isRequired else "boost::optional<std::string>"
+%>\
+% if v.isArray:
+    ${variant_type_return} ${base.attr.inst_name(v.name)}Type(size_t pos) const;
+% else:
+    ${variant_type_return} ${base.attr.inst_name(v.name)}Type() const;
+% endif
+% endif
 % endfor
 % if include_additional_properties:
     std::unordered_map<std::string, std::string> additionalProperties;
@@ -86,13 +105,12 @@ public:
     ${class_name}(const ${class_name} &other) = default;
     ${class_name}(const json11::Json &value);
 
+    /// Returns true if the contents of this object match the schema
     bool is_valid() const;
-
-    json11::Json to_json() const;
-
-protected:
+    /// Throws if the contents of this object do not match the schema
     void check_valid() const;
 
+    json11::Json to_json() const;
 }; // class ${class_name}
 
 % for ns in reversed(namespace.split('::')):

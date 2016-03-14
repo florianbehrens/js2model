@@ -1,0 +1,61 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "model",
+    "type": "object",
+    "typeName": "Variant",
+    "definitions": {
+        "rgbColor" : {
+            "type": "object",
+            "typeName": "RGBColor",
+            "required": [ "r", "g", "b" ],
+            "properties" : {
+                "r": { "type": "integer", "minimum": 0, "maximum": 255 },
+                "g": { "type": "integer", "minimum": 0, "maximum": 255 },
+                "b": { "type": "integer", "minimum": 0, "maximum": 255 }
+            }
+        },
+        "blobId" : {
+            "type": "string",
+            "pattern": "^[0-9A-Za-z\\-_]{48}$"
+        },
+        "fillLayer" : {
+            "type": "object",
+            "typeName": "FillLayer",
+            "required": ["type", "color"],
+            "properties" : {
+                "type" : {
+                    "enum": ["fill"]
+                },
+                "color" : { "$ref": "#definitions/rgbColor" }
+            }
+        },
+        "photoLayer" : {
+            "type": "object",
+            "typeName": "PhotoLayer",
+            "required": ["type", "blobId"],
+            "properties" : {
+                "type" : {
+                    "enum": ["photo"]
+                },
+                "blobId" : { "$ref": "#definitions/blobId" }
+            }
+        },
+        "layer" : {
+            "oneOf" : [
+                { "$ref": "#definitions/fillLayer" },
+                { "$ref": "#definitions/photoLayer" }
+            ]
+        },
+        "layerArray" : {
+            "type" : "array",
+            "items" : { "$ref": "#definitions/layer" }
+        }
+    },
+    "properties" : {
+        "requiredLayer" : { "$ref": "#definitions/layer" },
+        "optionalLayer" : { "$ref": "#definitions/layer" },
+        "requiredLayers" : { "$ref": "#definitions/layerArray" },
+        "optionalLayers" : { "$ref": "#definitions/layerArray" }
+    },
+    "required": ["requiredLayer", "requiredLayers"]
+}
