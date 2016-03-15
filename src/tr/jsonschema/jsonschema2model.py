@@ -32,6 +32,7 @@ import jsonref
 import logging
 import pkg_resources
 import pprint
+import sys
 from mako.lookup import TemplateLookup
 from mako import exceptions
 
@@ -507,6 +508,7 @@ class JsonSchema2Model(object):
                                         emit_empty_optionals_as_nulls=self.emit_empty_optionals_as_nulls))
             except:
                 print(exceptions.text_error_template().render())
+                sys.exit(-1)
 
     def render_enum_to_file(self, enum_def, templ_name):
 
@@ -529,6 +531,7 @@ class JsonSchema2Model(object):
                                              include_additional_properties=self.include_additional_properties))
             except:
                 print(exceptions.text_error_template().render())
+                sys.exit(-1)
 
     def render_global_template(self, models, templ_name):
 
@@ -555,6 +558,7 @@ class JsonSchema2Model(object):
                                              file_name=src_file_name))
             except:
                 print(exceptions.text_error_template().render())
+                sys.exit(-1)
 
     def copy_dependencies(self):
         support_path = os.path.join(os.path.dirname(__file__), 'templates_' + self.lang, 'dependencies')
@@ -932,6 +936,7 @@ class JsonSchema2Model(object):
                         Draft4Validator.check_schema(root_schema)
                     except SchemaError as e:
                         print(e)
+                        sys.exit(-1)
 
                 assert isinstance(root_schema, dict)
 
