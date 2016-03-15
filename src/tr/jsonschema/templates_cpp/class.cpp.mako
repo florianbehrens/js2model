@@ -60,8 +60,46 @@ ${class_name}::${class_name}(const Json &json) {
 inst_name = "this->" + base.attr.inst_name(v.name)
 temp_name = v.name + "Temp"
 %>\
+<%def name='assertJsonInputType(variableDef, jsonValue)'>\
+% if variableDef.type.schema_type == 'string':
+assert(${jsonValue}.is_string())\
+% elif variableDef.type.schema_type == 'integer':
+assert(${jsonValue}.is_number())\
+% elif variableDef.type.schema_type == 'number':
+assert(${jsonValue}.is_number())\
+% elif variableDef.type.schema_type == 'boolean':
+assert(${jsonValue}.is_bool())\
+% elif variableDef.type.schema_type == 'object':
+assert(${jsonValue}.is_object())\
+% endif
+</%def>\
+<%def name='jsonValueForType(variableDef, jsonValue)'>\
+% if variableDef.type.schema_type == 'string':
+% if variableDef.type.isEnum:
+ string_to_${variableDef.json_name}(${jsonValue}.string_value())\
+% else:
+${jsonValue}.string_value()\
+% endif
+% elif variableDef.type.schema_type == 'integer':
+int(${jsonValue}.number_value())\
+% elif variableDef.type.schema_type == 'number':
+${jsonValue}.number_value()\
+% elif variableDef.type.schema_type == 'boolean':
+${jsonValue}.bool_value()\
+% elif variableDef.type.schema_type == 'object':
+${variableDef.type.name}(${jsonValue})\
+% endif
+</%def>\
+<%def name='generateAssignmentFromJson(variableDef, lhs, rhs, lhsIsArray = False)'>\
+${assertJsonInputType(variableDef, rhs)};
+% if lhsIsArray:
+${lhs}.emplace_back(${jsonValueForType(variableDef, rhs)})\
+% else:
+${lhs} = ${jsonValueForType(variableDef, rhs)}\
+% endif
+</%def>\
     auto ${temp_name} = json["${v.json_name}"];
-    % if v.isRequired:
+    % if not v.isOptional:
     // required
     {
         % if v.isArray:
@@ -86,33 +124,16 @@ temp_name = v.name + "Temp"
                 destination_array.emplace_back(${concrete_type}(array_item));
             }
             % endfor
-        % elif v.type.schema_type == 'string':
-            assert(array_item.is_string());
-            % if v.type.isEnum:
-            destination_array.emplace_back(string_to_${v.json_name}(array_item.string_value()));
-            % else:
-            destination_array.emplace_back(array_item.string_value());
-            % endif:
-        % elif v.type.schema_type == 'integer':
-            assert(array_item.is_number());
-            destination_array.emplace_back(int(array_item.number_value()));
-        % elif v.type.schema_type == 'number':
-            assert(array_item.is_number());
-            destination_array.emplace_back(array_item.number_value());
-        % elif v.type.schema_type == 'boolean':
-            assert(array_item.is_bool());
-            destination_array.emplace_back(array_item.bool_value());
-        % elif v.type.schema_type == 'object':
-            assert(array_item.is_object());
-            destination_array.emplace_back(${v.type.name}(array_item));
-        % elif v.schema_type == 'array':
+        % elif v.type.schema_type == 'array':
             ## TODO: probably need to recursively handle arrays of arrays
             assert(array_item.is_array());
             vector<${v.type.name}> item_array;
             destination_array.emplace_back(${v.type.name}(item_array));
+        % else:
+            ${capture(generateAssignmentFromJson, v, "destination_array", "array_item", lhsIsArray = True) | indent12};
         % endif
         }
-        % if not v.isRequired:
+        % if v.isOptional:
         // Copy the constructed array into the optional<vector>
         ${inst_name} = destination_array;
         % endif
@@ -125,25 +146,8 @@ temp_name = v.name + "Temp"
             ${inst_name} = ${concrete_type}(${temp_name});
         }
         % endfor
-        % elif v.type.schema_type == 'string':
-        assert(${temp_name}.is_string());
-            % if v.type.isEnum:
-        ${inst_name} = string_to_${v.json_name}(${temp_name}.string_value());
-            % else:
-        ${inst_name} = ${temp_name}.string_value();
-            % endif
-        % elif v.type.schema_type == 'integer':
-        assert(${temp_name}.is_number());
-        ${inst_name} = int(${temp_name}.number_value());
-        % elif v.type.schema_type == 'number':
-        assert(${temp_name}.is_number());
-        ${inst_name} = ${temp_name}.number_value();
-        % elif v.type.schema_type == 'boolean':
-        assert(${temp_name}.is_bool());
-        ${inst_name} = ${temp_name}.bool_value();
-        % elif v.type.schema_type == 'object':
-        assert(${temp_name}.is_object());
-        ${inst_name} = ${v.type.name}(${temp_name});
+        % else:
+        ${capture(generateAssignmentFromJson, v, inst_name, temp_name, lhsIsArray = false) | indent8};
         % endif
     % endif
     }
@@ -164,7 +168,7 @@ void ${class_name}::check_valid() const {
 % for v in classDef.variable_defs:
 <%
 optional_inst_name = "this->" + base.attr.inst_name(v.name)
-inst_name = optional_inst_name if v.isRequired else optional_inst_name + ".get()"
+inst_name = optional_inst_name + ".get()" if v.isOptional else optional_inst_name
 
 has_array_validation_checks = (v.minItems is not None or
                                v.maxItems is not None)
@@ -253,7 +257,7 @@ for (const auto &arrayItem : ${inst_name}) {
 <% continue %>\
 % endif
 \
-% if not v.isRequired:
+% if v.isOptional:
     if (${optional_inst_name}.is_initialized()) {
 % if v.isArray:
         ${capture(emit_array_validation_checks, inst_name, v) | indent8}
@@ -293,7 +297,7 @@ Json ${class_name}::to_json() const {
 % for v in classDef.variable_defs:
 <%\
 optional_inst_name = "this->" + base.attr.inst_name(v.name)
-inst_name = optional_inst_name if v.isRequired else optional_inst_name + ".get()"
+inst_name = optional_inst_name + ".get()" if v.isOptional else optional_inst_name
 %>\
 <%def name='emit_assignment(var_def)'>\
 % if var_def.isVariant:
@@ -341,7 +345,7 @@ object["${var_def.json_name}"] = ${var_def.type.enum_def.plain_name}_to_string($
 object["${var_def.json_name}"] = ${inst_name};
 % endif
 </%def>\
-% if not v.isRequired:
+% if v.isOptional:
     if (${optional_inst_name}.is_initialized()) {
         ${capture(emit_assignment, v) | indent8}
 % if emit_empty_optionals_as_nulls:
@@ -361,8 +365,8 @@ object["${var_def.json_name}"] = ${inst_name};
 <%
 inst_name = base.attr.inst_name(v.name)
 item_name = "item" if v.isArray else inst_name
-accessor = item_name if v.isRequired else item_name + ".get()"
-variant_type_return = "std::string" if v.isRequired else "boost::optional<std::string>"
+accessor = item_name + ".get()" if v.isOptional else item_name
+variant_type_return = "boost::optional<std::string>" if v.isOptional else "std::string"
 %>\
 % if v.isArray:
 ${variant_type_return} ${class_name}::${inst_name}Type(size_t pos) const
@@ -370,13 +374,13 @@ ${variant_type_return} ${class_name}::${inst_name}Type(size_t pos) const
 ${variant_type_return} ${class_name}::${inst_name}Type() const
 % endif
 {
-% if not v.isRequired:
+% if v.isOptional:
     if (!${inst_name}.is_initialized()) {
         return boost::none;
     }
 % endif
 % if v.isArray:
-    const auto &item = ${inst_name if v.isRequired else inst_name + ".get()"}.at(pos);
+    const auto &item = ${inst_name + ".get()" if v.isOptional else inst_name}.at(pos);
 % endif
     class ${inst_name}_get_type : public boost::static_visitor<string>
     {
@@ -387,7 +391,7 @@ ${variant_type_return} ${class_name}::${inst_name}Type() const
         }
     % endfor
     };
-    return boost::apply_visitor(${inst_name}_get_type(), ${item_name if v.isRequired or v.isArray else item_name + ".get()"});
+    return boost::apply_visitor(${inst_name}_get_type(), ${item_name if not v.isOptional or v.isArray else item_name + ".get()"});
 }
 
 % endif

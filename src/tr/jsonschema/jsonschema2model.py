@@ -267,6 +267,7 @@ class VariableDef(object):
         self.storage = VariableDef.STORAGE_IVAR
         self.default = None
         self.isRequired = False
+        self.isNullable = False
         self.uniqueItems = False
         self.maxItems = None
         self.minItems = None
@@ -293,6 +294,7 @@ class VariableDef(object):
             'storage': self.storage,
             'default': self.default,
             'isRequired': self.isRequired,
+            'isNullable': self.isNullable,
             'uniqueItems': self.uniqueItems,
             'maxItems': self.maxItems,
             'minItems': self.minItems,
@@ -311,6 +313,10 @@ class VariableDef(object):
             'variantDefs': self.variantDefs,
         }
         return {k: v for k, v in base_dict.items() if v != None}
+
+    @property
+    def isOptional(self):
+        return self.isNullable or not self.isRequired
 
     def variantTypeMap(self):
         if not self.isVariant:
