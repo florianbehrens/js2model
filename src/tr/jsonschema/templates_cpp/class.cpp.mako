@@ -60,8 +60,45 @@ ${class_name}::${class_name}(const Json &json) {
 inst_name = "this->" + base.attr.inst_name(v.name)
 temp_name = v.name + "Temp"
 %>\
+<%def name='valueIsOfJsonInputType(json_schema_type, jsonValue)'>\
+% if json_schema_type == 'string':
+${jsonValue}.is_string()\
+% elif json_schema_type == 'integer':
+${jsonValue}.is_number()\
+% elif json_schema_type == 'number':
+${jsonValue}.is_number()\
+% elif json_schema_type == 'boolean':
+${jsonValue}.is_bool()\
+% elif json_schema_type == 'object':
+${jsonValue}.is_object()\
+% endif
+</%def>\
+<%def name='jsonValueForType(variableDef, jsonValue)'>\
+% if variableDef.type.schema_type == 'string':
+% if variableDef.type.isEnum:
+string_to_${variableDef.json_name}(${jsonValue}.string_value())\
+% else:
+${jsonValue}.string_value()\
+% endif
+% elif variableDef.type.schema_type == 'integer':
+int(${jsonValue}.number_value())\
+% elif variableDef.type.schema_type == 'number':
+${jsonValue}.number_value()\
+% elif variableDef.type.schema_type == 'boolean':
+${jsonValue}.bool_value()\
+% elif variableDef.type.schema_type == 'object':
+${variableDef.type.name}(${jsonValue})\
+% endif
+</%def>\
+<%def name='generateAssignmentFromJson(variableDef, lhs, rhs, lhsIsArray = False)'>\
+% if lhsIsArray:
+${lhs}.emplace_back(${jsonValueForType(variableDef, rhs)})\
+% else:
+${lhs} = ${jsonValueForType(variableDef, rhs)}\
+% endif
+</%def>\
     auto ${temp_name} = json["${v.json_name}"];
-    % if v.isRequired:
+    % if not v.isOptional:
     // required
     {
         % if v.isArray:
@@ -79,71 +116,51 @@ temp_name = v.name + "Temp"
         assert(${temp_name}.is_array());
         for( const auto array_item : ${temp_name}.array_items() ) {
         % if v.isVariant:
-            assert(array_item.is_object());
-            assert(array_item["type"].is_string());
-            % for json_type, concrete_type in v.variantTypeMap().iteritems():
-            ${"if" if loop.first else "else if"} (array_item["type"] == "${json_type}") {
-                destination_array.emplace_back(${concrete_type}(array_item));
+            % for variant in v.variantTypeList():
+            ${"if" if loop.first else "else if"} (${valueIsOfJsonInputType(variant["json_schema_type"], "array_item")}\
+% if variant["json_schema_type"] == "object":
+ && array_item["type"] == "${variant["json_type_id"]}") {
+% else:
+) {
+% endif
+                ${capture(generateAssignmentFromJson, variant["variable_def"], "destination_array", "array_item", lhsIsArray = True) | indent16};
             }
             % endfor
-        % elif v.type.schema_type == 'string':
-            assert(array_item.is_string());
-            % if v.type.isEnum:
-            destination_array.emplace_back(string_to_${v.json_name}(array_item.string_value()));
-            % else:
-            destination_array.emplace_back(array_item.string_value());
-            % endif:
-        % elif v.type.schema_type == 'integer':
-            assert(array_item.is_number());
-            destination_array.emplace_back(int(array_item.number_value()));
-        % elif v.type.schema_type == 'number':
-            assert(array_item.is_number());
-            destination_array.emplace_back(array_item.number_value());
-        % elif v.type.schema_type == 'boolean':
-            assert(array_item.is_bool());
-            destination_array.emplace_back(array_item.bool_value());
-        % elif v.type.schema_type == 'object':
-            assert(array_item.is_object());
-            destination_array.emplace_back(${v.type.name}(array_item));
-        % elif v.schema_type == 'array':
+            else {
+                assert(false); // Expected to find a valid value
+            }
+        % elif v.type.schema_type == 'array':
             ## TODO: probably need to recursively handle arrays of arrays
             assert(array_item.is_array());
             vector<${v.type.name}> item_array;
             destination_array.emplace_back(${v.type.name}(item_array));
+        % else:
+            assert(${valueIsOfJsonInputType(v.type.schema_type, "array_item")});
+            ${capture(generateAssignmentFromJson, v, "destination_array", "array_item", lhsIsArray = True) | indent12};
         % endif
         }
-        % if not v.isRequired:
+        % if v.isOptional:
         // Copy the constructed array into the optional<vector>
         ${inst_name} = destination_array;
         % endif
     % else:
         % if v.isVariant:
-        assert(${temp_name}.is_object());
-        assert(${temp_name}["type"].is_string());
-        % for json_type, concrete_type in v.variantTypeMap().iteritems():
-        ${"if" if loop.first else "else if"} (${temp_name}["type"] == "${json_type}") {
-            ${inst_name} = ${concrete_type}(${temp_name});
+        % for variant in v.variantTypeList():
+        ${"if" if loop.first else "else if"} (${valueIsOfJsonInputType(variant["json_schema_type"], temp_name)}\
+% if variant["json_schema_type"] == "object":
+ && ${temp_name}["type"] == "${variant["json_type_id"]}") {
+% else:
+ ) {
+% endif
+            ${capture(generateAssignmentFromJson, variant["variable_def"], inst_name, temp_name, lhsIsArray = False) | indent12};
         }
         % endfor
-        % elif v.type.schema_type == 'string':
-        assert(${temp_name}.is_string());
-            % if v.type.isEnum:
-        ${inst_name} = string_to_${v.json_name}(${temp_name}.string_value());
-            % else:
-        ${inst_name} = ${temp_name}.string_value();
-            % endif
-        % elif v.type.schema_type == 'integer':
-        assert(${temp_name}.is_number());
-        ${inst_name} = int(${temp_name}.number_value());
-        % elif v.type.schema_type == 'number':
-        assert(${temp_name}.is_number());
-        ${inst_name} = ${temp_name}.number_value();
-        % elif v.type.schema_type == 'boolean':
-        assert(${temp_name}.is_bool());
-        ${inst_name} = ${temp_name}.bool_value();
-        % elif v.type.schema_type == 'object':
-        assert(${temp_name}.is_object());
-        ${inst_name} = ${v.type.name}(${temp_name});
+        else {
+            assert(false); // Expected to find a valid value
+        }
+        % else:
+        assert(${valueIsOfJsonInputType(v.type.schema_type, temp_name)});
+        ${capture(generateAssignmentFromJson, v, inst_name, temp_name, lhsIsArray = false) | indent8};
         % endif
     % endif
     }
@@ -164,7 +181,7 @@ void ${class_name}::check_valid() const {
 % for v in classDef.variable_defs:
 <%
 optional_inst_name = "this->" + base.attr.inst_name(v.name)
-inst_name = optional_inst_name if v.isRequired else optional_inst_name + ".get()"
+inst_name = optional_inst_name + ".get()" if v.isOptional else optional_inst_name
 
 has_array_validation_checks = (v.minItems is not None or
                                v.maxItems is not None)
@@ -214,10 +231,17 @@ if (${inst_name} ${op} ${var_def.maximum})
 class ${var_def.name}_validator : public boost::static_visitor<void>
 {
 public:
-% for json_type, concrete_type in v.variantTypeMap().iteritems():
-    void operator()(const ${concrete_type} &value) const {
+% for variant in v.variantTypeList():
+    % if variant["json_schema_type"] == "object":
+    void operator()(const ${variant["native_type"]} &value) const {
         value.check_valid();
     }
+    % else:
+    void operator()(const ${base.attr.typeMap[variant["json_schema_type"]]} &value) const {
+        // TODO - support for multiple variant types is limited
+        // value.check_valid();
+    }
+    % endif
 % endfor
 };
 boost::apply_visitor(${var_def.name}_validator(), ${inst_name});
@@ -253,7 +277,7 @@ for (const auto &arrayItem : ${inst_name}) {
 <% continue %>\
 % endif
 \
-% if not v.isRequired:
+% if v.isOptional:
     if (${optional_inst_name}.is_initialized()) {
 % if v.isArray:
         ${capture(emit_array_validation_checks, inst_name, v) | indent8}
@@ -265,7 +289,7 @@ for (const auto &arrayItem : ${inst_name}) {
         ${capture(emit_numeric_validation_checks, inst_name, v) | indent8}
 % endif
 % if v.isVariant:
-    ${capture(emit_variant_validation_checks, inst_name, v) | indent8}
+        ${capture(emit_variant_validation_checks, inst_name, v) | indent8}
 % endif
 % endif
     }
@@ -293,17 +317,23 @@ Json ${class_name}::to_json() const {
 % for v in classDef.variable_defs:
 <%\
 optional_inst_name = "this->" + base.attr.inst_name(v.name)
-inst_name = optional_inst_name if v.isRequired else optional_inst_name + ".get()"
+inst_name = optional_inst_name + ".get()" if v.isOptional else optional_inst_name
 %>\
 <%def name='emit_assignment(var_def)'>\
 % if var_def.isVariant:
 class ${var_def.name}_to_json : public boost::static_visitor<Json>
 {
 public:
-% for json_type, concrete_type in v.variantTypeMap().iteritems():
-    Json operator()(const ${concrete_type} &value) const {
+% for variant in v.variantTypeList():
+    % if variant["json_schema_type"] == "object":
+    Json operator()(const ${variant["native_type"]} &value) const {
         return value.to_json();
     }
+    % else:
+    Json operator()(const ${base.attr.typeMap[variant["json_schema_type"]]} &value) const {
+        return Json(value);
+    }
+    % endif
 % endfor
 };
 % endif
@@ -341,10 +371,10 @@ object["${var_def.json_name}"] = ${var_def.type.enum_def.plain_name}_to_string($
 object["${var_def.json_name}"] = ${inst_name};
 % endif
 </%def>\
-% if not v.isRequired:
+% if v.isOptional:
     if (${optional_inst_name}.is_initialized()) {
         ${capture(emit_assignment, v) | indent8}
-% if emit_empty_optionals_as_nulls:
+% if v.isNullable:
     } else {
         object["${v.json_name}"] = Json(nullptr);
 % endif
@@ -361,8 +391,8 @@ object["${var_def.json_name}"] = ${inst_name};
 <%
 inst_name = base.attr.inst_name(v.name)
 item_name = "item" if v.isArray else inst_name
-accessor = item_name if v.isRequired else item_name + ".get()"
-variant_type_return = "std::string" if v.isRequired else "boost::optional<std::string>"
+accessor = item_name + ".get()" if v.isOptional else item_name
+variant_type_return = "boost::optional<std::string>" if v.isOptional else "std::string"
 %>\
 % if v.isArray:
 ${variant_type_return} ${class_name}::${inst_name}Type(size_t pos) const
@@ -370,24 +400,30 @@ ${variant_type_return} ${class_name}::${inst_name}Type(size_t pos) const
 ${variant_type_return} ${class_name}::${inst_name}Type() const
 % endif
 {
-% if not v.isRequired:
+% if v.isOptional:
     if (!${inst_name}.is_initialized()) {
         return boost::none;
     }
 % endif
 % if v.isArray:
-    const auto &item = ${inst_name if v.isRequired else inst_name + ".get()"}.at(pos);
+    const auto &item = ${inst_name + ".get()" if v.isOptional else inst_name}.at(pos);
 % endif
     class ${inst_name}_get_type : public boost::static_visitor<string>
     {
     public:
-    % for json_type, concrete_type in v.variantTypeMap().iteritems():
-        string operator()(const ${concrete_type} &value) const {
-            return ${concrete_type}::type_to_string(value.type);
+    % for variant in v.variantTypeList():
+        % if variant["json_schema_type"] == "object":
+        string operator()(const ${variant["native_type"]} &value) const {
+            return ${variant["native_type"]}::type_to_string(value.type);
         }
+        % else:
+        string operator()(const ${base.attr.typeMap[variant["json_schema_type"]]} &value) const {
+            return "${variant["json_schema_type"]}";
+        }
+        % endif
     % endfor
     };
-    return boost::apply_visitor(${inst_name}_get_type(), ${item_name if v.isRequired or v.isArray else item_name + ".get()"});
+    return boost::apply_visitor(${inst_name}_get_type(), ${item_name if not v.isOptional or v.isArray else item_name + ".get()"});
 }
 
 % endif
@@ -398,7 +434,7 @@ std::string ${class_name}::${enumDef.plain_name}_to_string(const ${class_name}::
 {
     switch (val) {
     % for v in enumDef.values:
-    case ${enumDef.name}::${ v.title() }:
+    case ${enumDef.name}::${ v[0].title() + v[1:] }:
         return "${v}";
     % endfor
     }
@@ -408,7 +444,7 @@ ${class_name}::${enumDef.name} ${class_name}::string_to_${enumDef.plain_name}(co
 {
     static const std::map<std::string, ${enumDef.name}> values = {
         % for v in enumDef.values:
-        { "${v}", ${enumDef.name}::${v.title()} },
+        { "${v}", ${enumDef.name}::${v[0].title() + v[1:]} },
         % endfor
     };
     // Throws std::out_of_range if an invalid string is passed

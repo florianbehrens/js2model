@@ -17,6 +17,7 @@ High
 [x] Don't emit empty classes (see Common.cpp)
 [x] Different namespace to avoid conflicts (`schema`)
 [x] Validation checks incorrect for arrays
+[x] Would like to make a property explicitly required, while supporting null output. Support `oneOf[{"type":null}, ...]`
 
 Medium
 
@@ -31,6 +32,9 @@ Medium
 
 Low
 
+[ ] Better template engine than Mako?
+    Whitespace management sucks
+    Logic scattered in the template
 [ ] Could nest schema classes as appropriate
 [x] Add directive to bypass precommit/clang-format
 [ ] Ctors that force you to fill all values...maybe. Tends to be annoying when there are many values.

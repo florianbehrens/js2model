@@ -30,7 +30,7 @@ varType = base.attr.convertType(variableDef)
 <%def name='enumDecl(enumDef)'>\
     enum class ${enumDef.name} {
 % for v in enumDef.values:
-        ${ v.title() },
+        ${ v[0].title() + v[1:] },
 % endfor
     };
     static std::string ${enumDef.plain_name}_to_string(const ${enumDef.name} &val);
@@ -40,7 +40,7 @@ varType = base.attr.convertType(variableDef)
 #pragma once
 
 <%
-has_optionals = not all([v.isRequired for v in classDef.variable_defs])
+has_optionals = any([v.isOptional for v in classDef.variable_defs])
 has_variants = any([v.isVariant for v in classDef.variable_defs])
 %>\
 % if has_optionals:
@@ -87,7 +87,7 @@ ${enumDecl(e)}
 ${propertyDecl(v)}
 % if v.isVariant:
 <%
-variant_type_return = "std::string" if v.isRequired else "boost::optional<std::string>"
+variant_type_return = "boost::optional<std::string>" if v.isOptional else "std::string"
 %>\
 % if v.isArray:
     ${variant_type_return} ${base.attr.inst_name(v.name)}Type(size_t pos) const;

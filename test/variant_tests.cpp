@@ -59,6 +59,7 @@ TEST_CASE( "Test" ) {
         REQUIRE(obj.optionalLayers == boost::none);
         REQUIRE(obj.optionalLayerType() == boost::none);
         REQUIRE(obj.optionalLayersType(0) == boost::none);
+        REQUIRE(obj.nullablePrimitive == boost::none);
     }
 
     SECTION( "Photo layer" ) {
@@ -74,6 +75,8 @@ TEST_CASE( "Test" ) {
         REQUIRE(obj.optionalLayers == boost::none);
         REQUIRE(obj.optionalLayerType() == boost::none);
         REQUIRE(obj.optionalLayersType(0) == boost::none);
+        REQUIRE(obj.nullablePrimitive.is_initialized());
+        REQUIRE(boost::get<int>(obj.nullablePrimitive.get()) == 1);
     }
 
     SECTION( "All layer combinations" ) {
@@ -83,6 +86,9 @@ TEST_CASE( "Test" ) {
 
         REQUIRE(obj.requiredLayerType() == "photo");
         REQUIRE(boost::get<PhotoLayer>(obj.requiredLayer).to_json().dump() == photoLayerData.dump());
+
+        REQUIRE(obj.nullablePrimitive.is_initialized());
+        REQUIRE(boost::get<string>(obj.nullablePrimitive.get()) == "abc");
 
         REQUIRE(obj.optionalLayerType().get() == "fill");
         REQUIRE(boost::get<FillLayer>(obj.optionalLayer.get()).to_json().dump() == fillLayerData.dump());

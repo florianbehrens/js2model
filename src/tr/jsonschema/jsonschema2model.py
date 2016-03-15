@@ -32,6 +32,7 @@ import jsonref
 import logging
 import pkg_resources
 import pprint
+import sys
 from mako.lookup import TemplateLookup
 from mako import exceptions
 
@@ -173,7 +174,7 @@ class ClassDef(object):
             if var_def.type.header_file:
                 dependencies.add(var_def.type.header_file)
             if var_def.isVariant:
-                dependencies.update(v.type.header_file for v in var_def.variantDefs)
+                dependencies.update(v.type.header_file for v in var_def.variantDefs if v.type.header_file)
 
         return dependencies if len(dependencies) else None
 
@@ -267,6 +268,7 @@ class VariableDef(object):
         self.storage = VariableDef.STORAGE_IVAR
         self.default = None
         self.isRequired = False
+        self.isNullable = False
         self.uniqueItems = False
         self.maxItems = None
         self.minItems = None
@@ -293,6 +295,7 @@ class VariableDef(object):
             'storage': self.storage,
             'default': self.default,
             'isRequired': self.isRequired,
+            'isNullable': self.isNullable,
             'uniqueItems': self.uniqueItems,
             'maxItems': self.maxItems,
             'minItems': self.minItems,
@@ -312,14 +315,14 @@ class VariableDef(object):
         }
         return {k: v for k, v in base_dict.items() if v != None}
 
-    def variantTypeMap(self):
-        if not self.isVariant:
-            return {}
-        map = {}
-        for v in self.variantDefs:
-            map[v.json_name] = v.type.name
+    @property
+    def isOptional(self):
+        return self.isNullable or not self.isRequired
 
-        return map
+    def variantTypeList(self):
+        if not self.isVariant:
+            return []
+        return [{'json_type_id': v.json_name, 'json_schema_type': v.type.schema_type, 'native_type': v.type.name, 'variable_def': v} for v in self.variantDefs]
 
     def __repr__(self):
         return pprint.pformat(self.to_dict())
@@ -501,6 +504,7 @@ class JsonSchema2Model(object):
                                         emit_empty_optionals_as_nulls=self.emit_empty_optionals_as_nulls))
             except:
                 print(exceptions.text_error_template().render())
+                sys.exit(-1)
 
     def render_enum_to_file(self, enum_def, templ_name):
 
@@ -523,6 +527,7 @@ class JsonSchema2Model(object):
                                              include_additional_properties=self.include_additional_properties))
             except:
                 print(exceptions.text_error_template().render())
+                sys.exit(-1)
 
     def render_global_template(self, models, templ_name):
 
@@ -549,6 +554,7 @@ class JsonSchema2Model(object):
                                              file_name=src_file_name))
             except:
                 print(exceptions.text_error_template().render())
+                sys.exit(-1)
 
     def copy_dependencies(self):
         support_path = os.path.join(os.path.dirname(__file__), 'templates_' + self.lang, 'dependencies')
@@ -706,6 +712,17 @@ class JsonSchema2Model(object):
         name = self.mk_var_name(json_name, lang_conventions.ivar_name_convention)
         var_def = VariableDef(name, json_name)
 
+        # Check for explicitly nullable types
+        one_of_decl = schema_object.get(JsonSchemaKeywords.ONE_OF, [])
+        if { "type": None } in one_of_decl:
+            var_def.isNullable = True
+            if len(one_of_decl) is 2:
+                one_of_decl.remove({ "type": None })
+                del schema_object[JsonSchemaKeywords.ONE_OF]
+                schema_object.update(one_of_decl[0])
+            else:
+                schema_object[JsonSchemaKeywords.ONE_OF].remove({ "type": None })
+
         if JsonSchemaKeywords.TITLE in schema_object:
             var_def.title = schema_object[JsonSchemaKeywords.TITLE]
 
@@ -782,6 +799,14 @@ class JsonSchema2Model(object):
                 var_def.isArray = True
 
             elif isinstance(schema_type, basestring):
+                if not schema_type in [JsonSchemaTypes.OBJECT,
+                                       JsonSchemaTypes.INTEGER,
+                                       JsonSchemaTypes.STRING,
+                                       JsonSchemaTypes.NUMBER,
+                                       JsonSchemaTypes.BOOLEAN,
+                                       JsonSchemaTypes.ARRAY]:
+                    raise ValueError("Invalid schema type '%s' in scope %s" % (schema_type, "> ".join(scope)))
+
                 var_def.type.name = schema_type
 
             #
@@ -844,14 +869,16 @@ class JsonSchema2Model(object):
         # Variant types
         #
         elif JsonSchemaKeywords.ONE_OF in schema_object:
+
             var_def.isVariant = True
             for variant_type in schema_object[JsonSchemaKeywords.ONE_OF]:
-                # import pdb; pdb.set_trace()
-                json_type_id = variant_type['properties']['type']['enum'][0]
+                if variant_type.has_key('properties'):
+                    json_type_id = variant_type['properties']['type']['enum'][0]
+                else:
+                    json_type_id = scope[-1]
                 scope.append(json_type_id)
                 variant_var_def = self.create_model(variant_type, scope)
                 scope.pop
-                assert variant_var_def.type.schema_type == "object"
                 variant_var_def.isRequired = True
                 var_def.variantDefs.append(variant_var_def)
         else:
@@ -926,6 +953,7 @@ class JsonSchema2Model(object):
                         Draft4Validator.check_schema(root_schema)
                     except SchemaError as e:
                         print(e)
+                        sys.exit(-1)
 
                 assert isinstance(root_schema, dict)
 
