@@ -8,6 +8,7 @@
                 "b": 0
             }
         },
+        "nullablePrimitive": null,
         "requiredLayers": []
     },
     {
@@ -15,6 +16,7 @@
             "type": "photo",
             "blobId": "xhuN8r50BDX09Kq-kOcf1cZvzd2GKoc4DiN5fiMARcPEDrO9"
         },
+        "nullablePrimitive": 1,
         "requiredLayers": []
     },
     {
@@ -22,6 +24,7 @@
             "type": "photo",
             "blobId": "xhuN8r50BDX09Kq-kOcf1cZvzd2GKoc4DiN5fiMARcPEDrO9"
         },
+        "nullablePrimitive": "abc",
         "optionalLayer": {
             "type": "fill",
             "color": {

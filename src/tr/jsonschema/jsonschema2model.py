@@ -174,7 +174,7 @@ class ClassDef(object):
             if var_def.type.header_file:
                 dependencies.add(var_def.type.header_file)
             if var_def.isVariant:
-                dependencies.update(v.type.header_file for v in var_def.variantDefs)
+                dependencies.update(v.type.header_file for v in var_def.variantDefs if v.type.header_file)
 
         return dependencies if len(dependencies) else None
 
@@ -319,14 +319,10 @@ class VariableDef(object):
     def isOptional(self):
         return self.isNullable or not self.isRequired
 
-    def variantTypeMap(self):
+    def variantTypeList(self):
         if not self.isVariant:
-            return {}
-        map = {}
-        for v in self.variantDefs:
-            map[v.json_name] = v.type.name
-
-        return map
+            return []
+        return [{'json_type_id': v.json_name, 'json_schema_type': v.type.schema_type, 'native_type': v.type.name, 'variable_def': v} for v in self.variantDefs]
 
     def __repr__(self):
         return pprint.pformat(self.to_dict())
@@ -716,6 +712,17 @@ class JsonSchema2Model(object):
         name = self.mk_var_name(json_name, lang_conventions.ivar_name_convention)
         var_def = VariableDef(name, json_name)
 
+        # Check for explicitly nullable types
+        one_of_decl = schema_object.get(JsonSchemaKeywords.ONE_OF, [])
+        if { "type": None } in one_of_decl:
+            var_def.isNullable = True
+            if len(one_of_decl) is 2:
+                one_of_decl.remove({ "type": None })
+                del schema_object[JsonSchemaKeywords.ONE_OF]
+                schema_object.update(one_of_decl[0])
+            else:
+                schema_object[JsonSchemaKeywords.ONE_OF].remove({ "type": None })
+
         if JsonSchemaKeywords.TITLE in schema_object:
             var_def.title = schema_object[JsonSchemaKeywords.TITLE]
 
@@ -792,6 +799,14 @@ class JsonSchema2Model(object):
                 var_def.isArray = True
 
             elif isinstance(schema_type, basestring):
+                if not schema_type in [JsonSchemaTypes.OBJECT,
+                                       JsonSchemaTypes.INTEGER,
+                                       JsonSchemaTypes.STRING,
+                                       JsonSchemaTypes.NUMBER,
+                                       JsonSchemaTypes.BOOLEAN,
+                                       JsonSchemaTypes.ARRAY]:
+                    raise ValueError("Invalid schema type '%s' in scope %s" % (schema_type, "> ".join(scope)))
+
                 var_def.type.name = schema_type
 
             #
@@ -854,14 +869,16 @@ class JsonSchema2Model(object):
         # Variant types
         #
         elif JsonSchemaKeywords.ONE_OF in schema_object:
+
             var_def.isVariant = True
             for variant_type in schema_object[JsonSchemaKeywords.ONE_OF]:
-                # import pdb; pdb.set_trace()
-                json_type_id = variant_type['properties']['type']['enum'][0]
+                if variant_type.has_key('properties'):
+                    json_type_id = variant_type['properties']['type']['enum'][0]
+                else:
+                    json_type_id = scope[-1]
                 scope.append(json_type_id)
                 variant_var_def = self.create_model(variant_type, scope)
                 scope.pop
-                assert variant_var_def.type.schema_type == "object"
                 variant_var_def.isRequired = True
                 var_def.variantDefs.append(variant_var_def)
         else:

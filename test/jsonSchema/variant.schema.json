@@ -53,9 +53,16 @@
     },
     "properties" : {
         "requiredLayer" : { "$ref": "#definitions/layer" },
+        "nullablePrimitive" : {
+            "oneOf": [
+                { "type": "string" },
+                { "type": "integer" },
+                { "type": null }
+            ]
+        },
         "optionalLayer" : { "$ref": "#definitions/layer" },
         "requiredLayers" : { "$ref": "#definitions/layerArray" },
         "optionalLayers" : { "$ref": "#definitions/layerArray" }
     },
-    "required": ["requiredLayer", "requiredLayers"]
+    "required": ["requiredLayer", "requiredLayers", "nullablePrimitive"]
 }
