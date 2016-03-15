@@ -30,7 +30,7 @@ varType = base.attr.convertType(variableDef)
 <%def name='enumDecl(enumDef)'>\
     enum class ${enumDef.name} {
 % for v in enumDef.values:
-        ${ v.title() },
+        ${ v[0].title() + v[1:] },
 % endfor
     };
     static std::string ${enumDef.plain_name}_to_string(const ${enumDef.name} &val);

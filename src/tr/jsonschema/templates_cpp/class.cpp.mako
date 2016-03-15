@@ -402,7 +402,7 @@ std::string ${class_name}::${enumDef.plain_name}_to_string(const ${class_name}::
 {
     switch (val) {
     % for v in enumDef.values:
-    case ${enumDef.name}::${ v.title() }:
+    case ${enumDef.name}::${ v[0].title() + v[1:] }:
         return "${v}";
     % endfor
     }
@@ -412,7 +412,7 @@ ${class_name}::${enumDef.name} ${class_name}::string_to_${enumDef.plain_name}(co
 {
     static const std::map<std::string, ${enumDef.name}> values = {
         % for v in enumDef.values:
-        { "${v}", ${enumDef.name}::${v.title()} },
+        { "${v}", ${enumDef.name}::${v[0].title() + v[1:]} },
         % endfor
     };
     // Throws std::out_of_range if an invalid string is passed
