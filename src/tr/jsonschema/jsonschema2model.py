@@ -411,7 +411,7 @@ class JsonSchema2Model(object):
     def __init__(self, outdir, import_files=None, super_classes=None, interfaces=None,
                  include_additional_properties=False,
                  lang='objc', prefix='TR', namespace='tr', root_name=None, validate=True, verbose=False,
-                 skip_deserialization=False, include_dependencies=True, template_manager=TemplateManager(), emit_empty_optionals_as_nulls=False):
+                 skip_deserialization=False, include_dependencies=True, template_manager=TemplateManager()):
 
         """
 
@@ -440,7 +440,6 @@ class JsonSchema2Model(object):
         self.verbose = verbose
         self.skip_deserialization = skip_deserialization
         self.include_dependencies = include_dependencies
-        self.emit_empty_optionals_as_nulls = emit_empty_optionals_as_nulls
 
         self.models = {}
         self.enums = {}
@@ -500,8 +499,7 @@ class JsonSchema2Model(object):
                                         timestamp=str(datetime.date.today()),
                                         year=int(datetime.date.today().year),
                                         file_name=src_file_name,
-                                        skip_deserialization=self.skip_deserialization,
-                                        emit_empty_optionals_as_nulls=self.emit_empty_optionals_as_nulls))
+                                        skip_deserialization=self.skip_deserialization))
             except:
                 print(exceptions.text_error_template().render())
                 sys.exit(-1)
