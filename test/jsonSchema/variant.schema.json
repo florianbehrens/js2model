@@ -57,7 +57,7 @@
             "oneOf": [
                 { "type": "string" },
                 { "type": "integer" },
-                { "type": null }
+                { "type": "null" }
             ]
         },
         "optionalLayer" : { "$ref": "#definitions/layer" },

@@ -712,14 +712,14 @@ class JsonSchema2Model(object):
 
         # Check for explicitly nullable types
         one_of_decl = schema_object.get(JsonSchemaKeywords.ONE_OF, [])
-        if { "type": None } in one_of_decl:
+        if { "type": JsonSchemaTypes.NULL } in one_of_decl:
             var_def.isNullable = True
             if len(one_of_decl) is 2:
-                one_of_decl.remove({ "type": None })
+                one_of_decl.remove({ "type": JsonSchemaTypes.NULL })
                 del schema_object[JsonSchemaKeywords.ONE_OF]
                 schema_object.update(one_of_decl[0])
             else:
-                schema_object[JsonSchemaKeywords.ONE_OF].remove({ "type": None })
+                schema_object[JsonSchemaKeywords.ONE_OF].remove({ "type": JsonSchemaTypes.NULL })
 
         if JsonSchemaKeywords.TITLE in schema_object:
             var_def.title = schema_object[JsonSchemaKeywords.TITLE]
@@ -802,6 +802,7 @@ class JsonSchema2Model(object):
                                        JsonSchemaTypes.STRING,
                                        JsonSchemaTypes.NUMBER,
                                        JsonSchemaTypes.BOOLEAN,
+                                       JsonSchemaTypes.NULL,
                                        JsonSchemaTypes.ARRAY]:
                     raise ValueError("Invalid schema type '%s' in scope %s" % (schema_type, "> ".join(scope)))
 
