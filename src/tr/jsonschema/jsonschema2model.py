@@ -941,10 +941,14 @@ class JsonSchema2Model(object):
 
             with open(fname) as jsonFile:
 
+                print("%s" % fname)
+
                 # root_schema = json.load(jsonFile)
                 # base_uri = 'file://' + os.path.split(os.path.realpath(f))[0]
                 base_uri = 'file://' + os.path.realpath(fname)
                 root_schema = jsonref.load(jsonFile, base_uri=base_uri, jsonschema=True, loader=loader, object_pairs_hook=collections.OrderedDict)
+                # import json
+                # print(json.dumps(root_schema, indent=4, separators=(',', ': ')))
 
                 if self.validate:
                     # TODO: Add exception handling
