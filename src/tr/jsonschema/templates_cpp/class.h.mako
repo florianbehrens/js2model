@@ -87,12 +87,13 @@ ${enumDecl(e)}
 ${propertyDecl(v)}
 % if v.isVariant:
 <%
-variant_type_return = "boost::optional<std::string>" if v.isOptional else "std::string"
+variant_type_return = "boost::optional<std::string>" if v.isOptional and not v.isArray else "std::string"
+inst_name = base.attr.inst_name(v.name)
 %>\
 % if v.isArray:
-    ${variant_type_return} ${base.attr.inst_name(v.name)}Type(size_t pos) const;
+    ${variant_type_return} ${inst_name}ValueType(const ${base.attr.arrayItemType(v)}& ${inst_name}Value) const;
 % else:
-    ${variant_type_return} ${base.attr.inst_name(v.name)}Type() const;
+    ${variant_type_return} ${inst_name}Type() const;
 % endif
 % endif
 % endfor

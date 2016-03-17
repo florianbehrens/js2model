@@ -58,7 +58,6 @@ TEST_CASE( "Test" ) {
         REQUIRE(obj.optionalLayer == boost::none);
         REQUIRE(obj.optionalLayers == boost::none);
         REQUIRE(obj.optionalLayerType() == boost::none);
-        REQUIRE(obj.optionalLayersType(0) == boost::none);
         REQUIRE(obj.nullablePrimitive == boost::none);
     }
 
@@ -74,7 +73,6 @@ TEST_CASE( "Test" ) {
         REQUIRE(obj.optionalLayer == boost::none);
         REQUIRE(obj.optionalLayers == boost::none);
         REQUIRE(obj.optionalLayerType() == boost::none);
-        REQUIRE(obj.optionalLayersType(0) == boost::none);
         REQUIRE(obj.nullablePrimitive.is_initialized());
         REQUIRE(boost::get<int>(obj.nullablePrimitive.get()) == 1);
     }
@@ -94,15 +92,19 @@ TEST_CASE( "Test" ) {
         REQUIRE(boost::get<FillLayer>(obj.optionalLayer.get()).to_json().dump() == fillLayerData.dump());
 
         REQUIRE(obj.requiredLayers.size() == 2);
-        REQUIRE(obj.requiredLayersType(0) == "photo");
+        REQUIRE(obj.requiredLayersValueType(obj.requiredLayers[0]) == "photo");
         REQUIRE(boost::get<PhotoLayer>(obj.requiredLayers[0]).to_json().dump() == photoLayerData.dump());
-        REQUIRE(obj.requiredLayersType(1) == "fill");
+        REQUIRE(obj.requiredLayersValueType(obj.requiredLayers[1]) == "fill");
         REQUIRE(boost::get<FillLayer>(obj.requiredLayers[1]).to_json().dump() == fillLayerData.dump());
 
-        REQUIRE(obj.optionalLayers.get().size() == 2);
-        REQUIRE(obj.optionalLayersType(0).get() == "fill");
-        REQUIRE(boost::get<FillLayer>(obj.optionalLayers.get()[0]).to_json().dump() == fillLayerData.dump());
-        REQUIRE(obj.optionalLayersType(1).get() == "photo");
-        REQUIRE(boost::get<PhotoLayer>(obj.optionalLayers.get()[1]).to_json().dump() == photoLayerData.dump());
+        {
+            REQUIRE(obj.optionalLayers);
+            auto optionalLayers = obj.optionalLayers.get();
+            REQUIRE(optionalLayers.size() == 2);
+            REQUIRE(obj.optionalLayersValueType(optionalLayers[0]) == "fill");
+            REQUIRE(boost::get<FillLayer>(optionalLayers[0]).to_json().dump() == fillLayerData.dump());
+            REQUIRE(obj.optionalLayersValueType(optionalLayers[1]) == "photo");
+            REQUIRE(boost::get<PhotoLayer>(optionalLayers[1]).to_json().dump() == photoLayerData.dump());
+        }
     }
 }

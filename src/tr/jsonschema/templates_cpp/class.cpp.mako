@@ -390,23 +390,20 @@ object["${var_def.json_name}"] = ${inst_name};
 % if v.isVariant:
 <%
 inst_name = base.attr.inst_name(v.name)
-item_name = "item" if v.isArray else inst_name
-accessor = item_name + ".get()" if v.isOptional else item_name
-variant_type_return = "boost::optional<std::string>" if v.isOptional else "std::string"
+inst_name = inst_name + "Value" if v.isArray else inst_name
+accessor = inst_name + ".get()" if v.isOptional and not v.isArray else inst_name
+variant_type_return = "boost::optional<std::string>" if v.isOptional and not v.isArray else "std::string"
 %>\
 % if v.isArray:
-${variant_type_return} ${class_name}::${inst_name}Type(size_t pos) const
+${variant_type_return} ${class_name}::${inst_name}Type(const ${base.attr.arrayItemType(v)}& ${inst_name}) const
 % else:
 ${variant_type_return} ${class_name}::${inst_name}Type() const
 % endif
 {
-% if v.isOptional:
+% if v.isOptional and not v.isArray:
     if (!${inst_name}.is_initialized()) {
         return boost::none;
     }
-% endif
-% if v.isArray:
-    const auto &item = ${inst_name + ".get()" if v.isOptional else inst_name}.at(pos);
 % endif
     class ${inst_name}_get_type : public boost::static_visitor<string>
     {
@@ -423,7 +420,7 @@ ${variant_type_return} ${class_name}::${inst_name}Type() const
         % endif
     % endfor
     };
-    return boost::apply_visitor(${inst_name}_get_type(), ${item_name if not v.isOptional or v.isArray else item_name + ".get()"});
+    return boost::apply_visitor(${inst_name}_get_type(), ${accessor});
 }
 
 % endif
