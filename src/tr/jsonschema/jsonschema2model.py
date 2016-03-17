@@ -75,7 +75,9 @@ class JmgLoader(object):
         self.defaultLoader = jsonref.JsonLoader(store, cache_results)
 
     def __call__(self, uri, **kwargs):
-        json = self.defaultLoader(uri, object_pairs_hook=collections.OrderedDict, **kwargs)
+        json = self.defaultLoader(uri,
+                                  object_pairs_hook=collections.OrderedDict,
+                                  **kwargs)
 
         # keep track of URI that the schema was loaded from
         json['__uri__'] = uri
@@ -590,12 +592,12 @@ class JsonSchema2Model(object):
 
     def get_schema_id(self, schema_object, scope):
 
-        if JsonSchemaKeywords.ID in schema_object:
+        if JsonSchemaKeywords.TYPENAME in schema_object:
+            return schema_object[JsonSchemaKeywords.TYPENAME]
+        elif JsonSchemaKeywords.ID in schema_object:
             return schema_object[JsonSchemaKeywords.ID]
         elif JsonSchema2Model.SCHEMA_URI in schema_object:
             return schema_object[JsonSchema2Model.SCHEMA_URI]
-        elif JsonSchemaKeywords.TYPENAME in schema_object:
-            return schema_object[JsonSchemaKeywords.TYPENAME]
         else:
             assert len(scope)
             return self.mk_class_name(scope[-1])
@@ -950,7 +952,13 @@ class JsonSchema2Model(object):
                 # root_schema = json.load(jsonFile)
                 # base_uri = 'file://' + os.path.split(os.path.realpath(f))[0]
                 base_uri = 'file://' + os.path.realpath(fname)
-                root_schema = jsonref.load(jsonFile, base_uri=base_uri, jsonschema=True, loader=loader, object_pairs_hook=collections.OrderedDict)
+                root_schema = jsonref.load(jsonFile,
+                                           base_uri=base_uri,
+                                           jsonschema=True,
+                                           loader=loader,
+                                           object_pairs_hook=collections.OrderedDict
+                                           )
+
                 # import json
                 # print(json.dumps(root_schema, indent=4, separators=(',', ': ')))
 
