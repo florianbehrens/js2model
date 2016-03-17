@@ -119,7 +119,7 @@ ${lhs} = ${jsonValueForType(variableDef, rhs)}\
             % for variant in v.variantTypeList():
             ${"if" if loop.first else "else if"} (${valueIsOfJsonInputType(variant["json_schema_type"], "array_item")}\
 % if variant["json_schema_type"] == "object":
- && array_item["type"] == "${variant["json_type_id"]}") {
+ && array_item["${v.variantTypeIdPath}"] == "${variant["json_type_id"]}") {
 % else:
 ) {
 % endif
@@ -148,7 +148,7 @@ ${lhs} = ${jsonValueForType(variableDef, rhs)}\
         % for variant in v.variantTypeList():
         ${"if" if loop.first else "else if"} (${valueIsOfJsonInputType(variant["json_schema_type"], temp_name)}\
 % if variant["json_schema_type"] == "object":
- && ${temp_name}["type"] == "${variant["json_type_id"]}") {
+ && ${temp_name}["${v.variantTypeIdPath}"] == "${variant["json_type_id"]}") {
 % else:
  ) {
 % endif
@@ -414,7 +414,7 @@ ${variant_type_return} ${class_name}::${inst_name}Type() const
     % for variant in v.variantTypeList():
         % if variant["json_schema_type"] == "object":
         string operator()(const ${variant["native_type"]} &value) const {
-            return ${variant["native_type"]}::type_to_string(value.type);
+            return ${variant["native_type"]}::${v.variantTypeIdPath}_to_string(value.${v.variantTypeIdPath});
         }
         % else:
         string operator()(const ${base.attr.typeMap[variant["json_schema_type"]]} &value) const {

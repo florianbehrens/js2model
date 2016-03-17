@@ -126,6 +126,7 @@ class JsonSchemaKeywords(object):
 
     # Extended keywords
     SUPERCLASS = '#superclass'
+    VARIANT_TYPE_ID_PATH = '__typeIdPath'
 
     def __setattr__(self, *_):
         raise ValueError("Trying to change a constant value", self)
@@ -285,6 +286,7 @@ class VariableDef(object):
         self.isArray = False
         self.isVariant = False
         self.variantDefs = []
+        self.variantTypeIdPath = 'type'
 
     def to_dict(self):
         base_dict = {
@@ -312,6 +314,7 @@ class VariableDef(object):
             'isArray': self.isArray,
             'isVariant': self.isVariant,
             'variantDefs': self.variantDefs,
+            'variantTypeIdPath': self.variantTypeIdPath,
         }
         return {k: v for k, v in base_dict.items() if v != None}
 
@@ -871,8 +874,9 @@ class JsonSchema2Model(object):
 
             var_def.isVariant = True
             for variant_type in schema_object[JsonSchemaKeywords.ONE_OF]:
+                var_def.variantTypeIdPath = schema_object.get(JsonSchemaKeywords.VARIANT_TYPE_ID_PATH, 'type')
                 if variant_type.has_key('properties'):
-                    json_type_id = variant_type['properties']['type']['enum'][0]
+                    json_type_id = variant_type['properties'][var_def.variantTypeIdPath]['enum'][0]
                 else:
                     json_type_id = scope[-1]
                 scope.append(json_type_id)
