@@ -193,9 +193,12 @@ has_string_validation_checks = (v.minLength is not None or
 has_numeric_validation_checks = (v.minimum is not None or
                                  v.maximum is not None)
 
+has_object_validation_checks = v.type.schema_type == "object"
+
 has_any_validation_checks = (has_array_validation_checks or
                              has_string_validation_checks or
                              has_numeric_validation_checks or
+                             has_object_validation_checks or
                              v.isVariant)
 %>\
 <%def name='emit_string_validation_checks(inst_name, var_def)'>\
@@ -225,6 +228,10 @@ if (${inst_name} ${op} ${var_def.minimum})
 if (${inst_name} ${op} ${var_def.maximum})
     throw out_of_range("${base.attr.inst_name(var_def.name)} too large");
 % endif
+</%def>\
+\
+<%def name='emit_object_validation_checks(inst_name, var_def)'>\
+${inst_name}.check_valid();
 </%def>\
 \
 <%def name='emit_variant_validation_checks(inst_name, var_def)'>\
@@ -258,13 +265,16 @@ if (${inst_name}.size() > ${var_def.maxItems})
     throw out_of_range("Array ${base.attr.inst_name(var_def.name)} has too many items");
 % endif
 % endif
-% if has_string_validation_checks or has_numeric_validation_checks or var_def.isVariant:
+% if has_string_validation_checks or has_numeric_validation_checks or has_object_validation_checks or var_def.isVariant:
 for (const auto &arrayItem : ${inst_name}) {
 % if has_string_validation_checks:
     ${capture(emit_string_validation_checks, "arrayItem", var_def) | indent4}
 % endif
 % if has_numeric_validation_checks:
     ${capture(emit_numeric_validation_checks, "arrayItem", var_def) | indent4}
+% endif
+% if has_object_validation_checks:
+    ${capture(emit_object_validation_checks, "arrayItem", var_def) | indent4}
 % endif
 % if var_def.isVariant:
     ${capture(emit_variant_validation_checks, "arrayItem", var_def) | indent4}
@@ -288,6 +298,9 @@ for (const auto &arrayItem : ${inst_name}) {
 % if has_numeric_validation_checks:
         ${capture(emit_numeric_validation_checks, inst_name, v) | indent8}
 % endif
+% if has_object_validation_checks:
+        ${capture(emit_object_validation_checks, inst_name, v) | indent8}
+% endif
 % if v.isVariant:
         ${capture(emit_variant_validation_checks, inst_name, v) | indent8}
 % endif
@@ -302,6 +315,9 @@ for (const auto &arrayItem : ${inst_name}) {
 % endif
 % if has_numeric_validation_checks:
     ${capture(emit_numeric_validation_checks, inst_name, v) | indent4}
+% endif
+% if has_object_validation_checks:
+    ${capture(emit_object_validation_checks, inst_name, v) | indent4}
 % endif
 % if v.isVariant:
     ${capture(emit_variant_validation_checks, inst_name, v) | indent4}
