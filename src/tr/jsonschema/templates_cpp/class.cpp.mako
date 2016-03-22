@@ -57,7 +57,7 @@ ${class_name}::${class_name}(const Json &json) {
 
 % for v in classDef.variable_defs:
 <%
-inst_name = "this->" + base.attr.inst_name(v.name)
+inst_name = "this->" + v.name
 temp_name = v.name + "Temp"
 %>\
 <%def name='valueIsOfJsonInputType(json_schema_type, jsonValue)'>\
@@ -180,7 +180,7 @@ bool ${class_name}::is_valid() const {
 void ${class_name}::check_valid() const {
 % for v in classDef.variable_defs:
 <%
-optional_inst_name = "this->" + base.attr.inst_name(v.name)
+optional_inst_name = "this->" + v.name
 inst_name = optional_inst_name + ".get()" if v.isOptional else optional_inst_name
 
 has_array_validation_checks = (v.minItems is not None or
@@ -204,16 +204,16 @@ has_any_validation_checks = (has_array_validation_checks or
 <%def name='emit_string_validation_checks(inst_name, var_def)'>\
 % if var_def.minLength is not None:
 if (${inst_name}.size() < ${var_def.minLength})
-    throw out_of_range("${base.attr.inst_name(var_def.name)} too short");
+    throw out_of_range("${var_def.name} too short");
 % endif
 % if var_def.maxLength is not None:
 if (${inst_name}.size() > ${var_def.maxLength})
-    throw out_of_range("${base.attr.inst_name(var_def.name)} too long");
+    throw out_of_range("${var_def.name} too long");
 % endif
 % if var_def.pattern:
-auto ${base.attr.inst_name(var_def.name)}_regex = regex(R"_(${var_def.pattern})_", regex_constants::ECMAScript);
-if (!regex_match(${inst_name}, ${base.attr.inst_name(var_def.name)}_regex))
-    throw invalid_argument("${base.attr.inst_name(var_def.name)} doesn't match regex pattern");
+auto ${var_def.name}_regex = regex(R"_(${var_def.pattern})_", regex_constants::ECMAScript);
+if (!regex_match(${inst_name}, ${var_def.name}_regex))
+    throw invalid_argument("${var_def.name} doesn't match regex pattern");
 % endif
 </%def>\
 \
@@ -221,12 +221,12 @@ if (!regex_match(${inst_name}, ${base.attr.inst_name(var_def.name)}_regex))
 % if var_def.minimum is not None:
 <% op = "<=" if var_def.exclusiveMinimum else "<" %>\
 if (${inst_name} ${op} ${var_def.minimum})
-    throw out_of_range("${base.attr.inst_name(var_def.name)} too small");
+    throw out_of_range("${var_def.name} too small");
 % endif
 % if var_def.maximum is not None:
 <% op = ">=" if var_def.exclusiveMaximum else ">" %>\
 if (${inst_name} ${op} ${var_def.maximum})
-    throw out_of_range("${base.attr.inst_name(var_def.name)} too large");
+    throw out_of_range("${var_def.name} too large");
 % endif
 </%def>\
 \
@@ -258,11 +258,11 @@ boost::apply_visitor(${var_def.name}_validator(), ${inst_name});
 % if has_array_validation_checks:
 % if var_def.minItems is not None:
 if (${inst_name}.size() < ${var_def.minItems})
-    throw out_of_range("Array ${base.attr.inst_name(var_def.name)} has too few items");
+    throw out_of_range("Array ${var_def.name} has too few items");
 % endif
 % if var_def.maxItems is not None:
 if (${inst_name}.size() > ${var_def.maxItems})
-    throw out_of_range("Array ${base.attr.inst_name(var_def.name)} has too many items");
+    throw out_of_range("Array ${var_def.name} has too many items");
 % endif
 % endif
 % if has_string_validation_checks or has_numeric_validation_checks or has_object_validation_checks or var_def.isVariant:
@@ -332,7 +332,7 @@ Json ${class_name}::to_json() const {
     auto object = Json::object();
 % for v in classDef.variable_defs:
 <%\
-optional_inst_name = "this->" + base.attr.inst_name(v.name)
+optional_inst_name = "this->" + v.name
 inst_name = optional_inst_name + ".get()" if v.isOptional else optional_inst_name
 %>\
 <%def name='emit_assignment(var_def)'>\
@@ -405,7 +405,7 @@ object["${var_def.json_name}"] = ${inst_name};
 % for v in classDef.variable_defs:
 % if v.isVariant:
 <%
-inst_name = base.attr.inst_name(v.name)
+inst_name = v.name
 inst_name = inst_name + "Value" if v.isArray else inst_name
 accessor = inst_name + ".get()" if v.isOptional and not v.isArray else inst_name
 variant_type_return = "boost::optional<std::string>" if v.isOptional and not v.isArray else "std::string"

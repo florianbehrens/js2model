@@ -25,7 +25,7 @@ THE SOFTWARE.
 <%
 varType = base.attr.convertType(variableDef)
 %>\
-    ${varType} ${base.attr.inst_name(variableDef.name)};\
+    ${varType} ${variableDef.name};\
 </%def>\
 <%def name='enumDecl(enumDef)'>\
     enum class ${enumDef.name} {
@@ -88,12 +88,11 @@ ${propertyDecl(v)}
 % if v.isVariant:
 <%
 variant_type_return = "boost::optional<std::string>" if v.isOptional and not v.isArray else "std::string"
-inst_name = base.attr.inst_name(v.name)
 %>\
 % if v.isArray:
-    ${variant_type_return} ${inst_name}ValueType(const ${base.attr.arrayItemType(v)}& ${inst_name}Value) const;
+    ${variant_type_return} ${v.name}ValueType(const ${base.attr.arrayItemType(v)}& ${v.name}Value) const;
 % else:
-    ${variant_type_return} ${inst_name}Type() const;
+    ${variant_type_return} ${v.name}Type() const;
 % endif
 % endif
 % endfor
