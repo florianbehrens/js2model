@@ -71,7 +71,7 @@ def inst_name(value):
 Convert a JSON type to an Objective C type.
 </%doc>\
 <%!
-    def convertType(variableDef):
+    def itemType(variableDef):
 
         if variableDef.isVariant:
             typelist = [convertType(x) for x in variableDef.variantDefs]
@@ -80,15 +80,28 @@ Convert a JSON type to an Objective C type.
             type = variableDef.type
             cppType = type.name if not type.name in typeMap else typeMap[type.name]
 
+        return cppType
+
+    def convertType(variableDef):
+
+        cppType = itemType(variableDef)
+
         if variableDef.isArray:
-             varType = "std::vector<%s>" % cppType
+            varType = "std::vector<%s>" % cppType
         else:
-             varType = cppType
+            varType = cppType
 
         if variableDef.isOptional:
-             varType = "boost::optional<%s>" % varType
+            varType = "boost::optional<%s>" % varType
 
         return varType
+
+    def arrayItemType(variableDef):
+
+        if not variableDef.isArray:
+            raise TypeError("Not an array type " + str(variableDef))
+
+        return itemType(variableDef)
 %>\
 //
 //  ${file_name}

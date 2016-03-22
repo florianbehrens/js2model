@@ -119,7 +119,7 @@ ${lhs} = ${jsonValueForType(variableDef, rhs)}\
             % for variant in v.variantTypeList():
             ${"if" if loop.first else "else if"} (${valueIsOfJsonInputType(variant["json_schema_type"], "array_item")}\
 % if variant["json_schema_type"] == "object":
- && array_item["type"] == "${variant["json_type_id"]}") {
+ && array_item["${v.variantTypeIdPath}"] == "${variant["json_type_id"]}") {
 % else:
 ) {
 % endif
@@ -148,7 +148,7 @@ ${lhs} = ${jsonValueForType(variableDef, rhs)}\
         % for variant in v.variantTypeList():
         ${"if" if loop.first else "else if"} (${valueIsOfJsonInputType(variant["json_schema_type"], temp_name)}\
 % if variant["json_schema_type"] == "object":
- && ${temp_name}["type"] == "${variant["json_type_id"]}") {
+ && ${temp_name}["${v.variantTypeIdPath}"] == "${variant["json_type_id"]}") {
 % else:
  ) {
 % endif
@@ -193,9 +193,12 @@ has_string_validation_checks = (v.minLength is not None or
 has_numeric_validation_checks = (v.minimum is not None or
                                  v.maximum is not None)
 
+has_object_validation_checks = v.type.schema_type == "object"
+
 has_any_validation_checks = (has_array_validation_checks or
                              has_string_validation_checks or
                              has_numeric_validation_checks or
+                             has_object_validation_checks or
                              v.isVariant)
 %>\
 <%def name='emit_string_validation_checks(inst_name, var_def)'>\
@@ -225,6 +228,10 @@ if (${inst_name} ${op} ${var_def.minimum})
 if (${inst_name} ${op} ${var_def.maximum})
     throw out_of_range("${base.attr.inst_name(var_def.name)} too large");
 % endif
+</%def>\
+\
+<%def name='emit_object_validation_checks(inst_name, var_def)'>\
+${inst_name}.check_valid();
 </%def>\
 \
 <%def name='emit_variant_validation_checks(inst_name, var_def)'>\
@@ -258,13 +265,16 @@ if (${inst_name}.size() > ${var_def.maxItems})
     throw out_of_range("Array ${base.attr.inst_name(var_def.name)} has too many items");
 % endif
 % endif
-% if has_string_validation_checks or has_numeric_validation_checks or var_def.isVariant:
+% if has_string_validation_checks or has_numeric_validation_checks or has_object_validation_checks or var_def.isVariant:
 for (const auto &arrayItem : ${inst_name}) {
 % if has_string_validation_checks:
     ${capture(emit_string_validation_checks, "arrayItem", var_def) | indent4}
 % endif
 % if has_numeric_validation_checks:
     ${capture(emit_numeric_validation_checks, "arrayItem", var_def) | indent4}
+% endif
+% if has_object_validation_checks:
+    ${capture(emit_object_validation_checks, "arrayItem", var_def) | indent4}
 % endif
 % if var_def.isVariant:
     ${capture(emit_variant_validation_checks, "arrayItem", var_def) | indent4}
@@ -288,6 +298,9 @@ for (const auto &arrayItem : ${inst_name}) {
 % if has_numeric_validation_checks:
         ${capture(emit_numeric_validation_checks, inst_name, v) | indent8}
 % endif
+% if has_object_validation_checks:
+        ${capture(emit_object_validation_checks, inst_name, v) | indent8}
+% endif
 % if v.isVariant:
         ${capture(emit_variant_validation_checks, inst_name, v) | indent8}
 % endif
@@ -302,6 +315,9 @@ for (const auto &arrayItem : ${inst_name}) {
 % endif
 % if has_numeric_validation_checks:
     ${capture(emit_numeric_validation_checks, inst_name, v) | indent4}
+% endif
+% if has_object_validation_checks:
+    ${capture(emit_object_validation_checks, inst_name, v) | indent4}
 % endif
 % if v.isVariant:
     ${capture(emit_variant_validation_checks, inst_name, v) | indent4}
@@ -390,23 +406,20 @@ object["${var_def.json_name}"] = ${inst_name};
 % if v.isVariant:
 <%
 inst_name = base.attr.inst_name(v.name)
-item_name = "item" if v.isArray else inst_name
-accessor = item_name + ".get()" if v.isOptional else item_name
-variant_type_return = "boost::optional<std::string>" if v.isOptional else "std::string"
+inst_name = inst_name + "Value" if v.isArray else inst_name
+accessor = inst_name + ".get()" if v.isOptional and not v.isArray else inst_name
+variant_type_return = "boost::optional<std::string>" if v.isOptional and not v.isArray else "std::string"
 %>\
 % if v.isArray:
-${variant_type_return} ${class_name}::${inst_name}Type(size_t pos) const
+${variant_type_return} ${class_name}::${inst_name}Type(const ${base.attr.arrayItemType(v)}& ${inst_name}) const
 % else:
 ${variant_type_return} ${class_name}::${inst_name}Type() const
 % endif
 {
-% if v.isOptional:
+% if v.isOptional and not v.isArray:
     if (!${inst_name}.is_initialized()) {
         return boost::none;
     }
-% endif
-% if v.isArray:
-    const auto &item = ${inst_name + ".get()" if v.isOptional else inst_name}.at(pos);
 % endif
     class ${inst_name}_get_type : public boost::static_visitor<string>
     {
@@ -414,7 +427,7 @@ ${variant_type_return} ${class_name}::${inst_name}Type() const
     % for variant in v.variantTypeList():
         % if variant["json_schema_type"] == "object":
         string operator()(const ${variant["native_type"]} &value) const {
-            return ${variant["native_type"]}::type_to_string(value.type);
+            return ${variant["native_type"]}::${v.variantTypeIdPath}_to_string(value.${v.variantTypeIdPath});
         }
         % else:
         string operator()(const ${base.attr.typeMap[variant["json_schema_type"]]} &value) const {
@@ -423,7 +436,7 @@ ${variant_type_return} ${class_name}::${inst_name}Type() const
         % endif
     % endfor
     };
-    return boost::apply_visitor(${inst_name}_get_type(), ${item_name if not v.isOptional or v.isArray else item_name + ".get()"});
+    return boost::apply_visitor(${inst_name}_get_type(), ${accessor});
 }
 
 % endif
