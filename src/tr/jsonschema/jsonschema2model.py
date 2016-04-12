@@ -40,6 +40,7 @@ from jsonschema import Draft4Validator
 from jsonschema.exceptions import SchemaError
 from shutil import copytree, copy2, rmtree
 from collections import namedtuple
+from copy import deepcopy
 
 __author__ = 'kevin zimmerman'
 
@@ -717,14 +718,16 @@ class JsonSchema2Model(object):
 
         # Check for explicitly nullable types
         one_of_decl = schema_object.get(JsonSchemaKeywords.ONE_OF, [])
-        if { "type": JsonSchemaTypes.NULL } in one_of_decl:
+        nullable_type = { "type": JsonSchemaTypes.NULL }
+        if nullable_type in one_of_decl:
             var_def.isNullable = True
-            if len(one_of_decl) is 2:
-                one_of_decl.remove({ "type": JsonSchemaTypes.NULL })
-                del schema_object[JsonSchemaKeywords.ONE_OF]
-                schema_object.update(one_of_decl[0])
-            else:
-                schema_object[JsonSchemaKeywords.ONE_OF].remove({ "type": JsonSchemaTypes.NULL })
+            schema_copy = deepcopy(schema_object)
+            one_of_decl = schema_copy[JsonSchemaKeywords.ONE_OF]
+            one_of_decl.remove(nullable_type)
+            if len(one_of_decl) is 1:
+                del schema_copy[JsonSchemaKeywords.ONE_OF]
+                schema_copy.update(one_of_decl[0])
+            schema_object = schema_copy
 
         if JsonSchemaKeywords.TITLE in schema_object:
             var_def.title = schema_object[JsonSchemaKeywords.TITLE]
