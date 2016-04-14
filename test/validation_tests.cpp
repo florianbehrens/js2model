@@ -200,23 +200,23 @@ TEST_CASE( "Array validation" ) {
      SECTION( "Minimum" ) {
          auto v = Validation();
 
-         v.minArray = { 1 };
+         v.minArray = vector<int>{ 1 };
          REQUIRE(!v.is_valid());
 
-         v.minArray = { 1, 2 };
+         v.minArray = vector<int>{ 1, 2 };
          REQUIRE(v.is_valid());
      }
 
      SECTION( "Maximum" ) {
          auto v = Validation();
 
-         v.maxArray = { };
+         v.maxArray = vector<int>();
          REQUIRE(v.is_valid());
 
-         v.maxArray = { 1, 2, 3, 4, 5, 6, 7, 8 };
+         v.maxArray = vector<int>{ 1, 2, 3, 4, 5, 6, 7, 8 };
          REQUIRE(v.is_valid());
 
-         v.maxArray = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+         v.maxArray = vector<int>{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };
          REQUIRE(!v.is_valid());
      }
 
@@ -226,13 +226,13 @@ TEST_CASE( "Array validation" ) {
          v.rangedArray = vector<int>();
          REQUIRE(!v.is_valid());
 
-         v.rangedArray = { 1 };
+         v.rangedArray = vector<int>{ 1 };
          REQUIRE(v.is_valid());
 
-         v.rangedArray = { 1, 2, 3, 4, 5, 6, 7, 8 };
+         v.rangedArray = vector<int>{ 1, 2, 3, 4, 5, 6, 7, 8 };
          REQUIRE(v.is_valid());
 
-         v.rangedArray = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+         v.rangedArray = vector<int>{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };
          REQUIRE(!v.is_valid());
      }
 }
