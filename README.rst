@@ -1,4 +1,4 @@
-.. image:: https://travis-ci.org/FiftyThree/js2model.svg?branch=master
+.. image:: https://travis-ci.org/FiftyThree/js2model.svg
     :target: https://travis-ci.org/FiftyThree/js2model
 
 Overview
