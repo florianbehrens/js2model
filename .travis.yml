@@ -1,3 +1,8 @@
+# We want master to build on push, but not pull requests
+branches:
+  only:
+    - master
+
 language: python
 
 # command to install dependencies
