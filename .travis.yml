@@ -1,0 +1,18 @@
+language: python
+
+# command to install dependencies
+install: "pip install -r src/requirements.txt"
+
+# Need a newer compiler. Couldn't actually get clang working with libc++.
+# h/t https://jonasw.de/blog/2015/07/22/develop/cplusplus14-on-travis-with-cmake/
+#     https://github.com/genbattle/dkm/blob/9c893efb556516f4b121a6201b66e000f838dd59/.travis.yml
+addons:
+  apt:
+    sources:
+    - llvm-toolchain-precise-3.7
+    - ubuntu-toolchain-r-test
+    packages:
+    - clang-3.7
+    - g++-5
+
+script: cd test && make clean && CXX="g++-5" LIBCXX="stdc++" make
