@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/FiftyThree/js2model.svg?branch=master
+    :target: https://travis-ci.org/FiftyThree/js2model
+
 Overview
 ========
 
