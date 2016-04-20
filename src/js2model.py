@@ -47,8 +47,10 @@ def main():
                         help='Comma separated list of interface(s)|protocol(s) supported by the generated classes')
     parser.add_argument('--super', default=None,
                         help='Comma separated list of super classes. Generated classes inherit these')
-    parser.add_argument('--import', dest='import_files', default=None,
-                        help='Comma separated list of files to @import for Objective C source files.')
+    parser.add_argument('--assert-macro', default='assert',
+                        help='Custom assert macro. Default is \'assert\'')
+    parser.add_argument('--include', dest='include_files', default=None,
+                        help='Comma separated list of files to #include for C++ source files.')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', default=False,
                         help='Print actions to STDOUT.')
     parser.add_argument('--no-deserialize', dest='no_deserialize', action='store_true', default=False,
@@ -83,9 +85,10 @@ def main():
                                  prefix=args.prefix,
                                  namespace=args.namespace,
                                  root_name=args.rootname,
-                                 import_files=args.import_files.split(',') if args.import_files else [],
+                                 include_files=args.include_files.split(',') if args.include_files else [],
                                  super_classes=args.super.split(',') if args.super else [],
                                  interfaces=args.implements.split(',') if args.implements else [],
+                                 assert_macro = args.assert_macro,
                                  # include_additional_properties=args.additional,
                                  validate=args.novalidate,
                                  verbose=args.verbose,

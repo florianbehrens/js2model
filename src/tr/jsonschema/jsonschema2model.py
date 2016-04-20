@@ -414,18 +414,19 @@ class TemplateManager(object):
 class JsonSchema2Model(object):
     SCHEMA_URI = '__uri__'
 
-    def __init__(self, outdir, import_files=None, super_classes=None, interfaces=None,
-                 include_additional_properties=False,
+    def __init__(self, outdir, include_files=None, super_classes=None, interfaces=None,
+                 include_additional_properties=False, assert_macro='assert',
                  lang='objc', prefix='TR', namespace='tr', root_name=None, validate=True, verbose=False,
                  skip_deserialization=False, include_dependencies=True, template_manager=TemplateManager()):
 
         """
 
         :param outdir:
-        :param import_files:
+        :param include_files:
         :param super_classes:
         :param interfaces:
         :param include_additional_properties:
+        :param assert_macro:
         :param lang:
         :param prefix:
         :param root_name:
@@ -435,10 +436,11 @@ class JsonSchema2Model(object):
         """
         self.validate = validate
         self.outdir = outdir
-        self.import_files = import_files
+        self.include_files = include_files
         self.super_classes = super_classes
         self.interfaces = interfaces
         self.include_additional_properties = include_additional_properties
+        self.assert_macro = assert_macro
         self.lang = lang
         self.prefix = prefix
         self.namespace = namespace
@@ -499,7 +501,8 @@ class JsonSchema2Model(object):
             try:
                 self.verbose_output("Writing %s" % outfile_name)
                 f.write(template.render(classDef=class_def,
-                                        import_files=self.import_files,
+                                        include_files=self.include_files,
+                                        assert_macro=self.assert_macro,
                                         namespace=self.namespace,
                                         include_additional_properties=self.include_additional_properties,
                                         timestamp=str(datetime.date.today()),
@@ -523,7 +526,8 @@ class JsonSchema2Model(object):
             try:
                 self.verbose_output("Writing %s" % outfile_name)
                 f.write(decl_template.render(enumDef=enum_def,
-                                             import_files=self.import_files,
+                                             include_files=self.include_files,
+                                             assert_macro=self.assert_macro,
                                              namespace=self.namespace,
                                              timestamp=str(datetime.date.today()),
                                              year=int(datetime.date.today().year),

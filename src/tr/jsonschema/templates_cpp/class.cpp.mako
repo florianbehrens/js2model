@@ -24,7 +24,9 @@ THE SOFTWARE.
 <%block name="code">
 #include "${classDef.header_file}"
 
+% if assert_macro == "assert":
 #include <assert.h>
+% endif
 % if classDef.has_var_patterns:
 #include <regex>
 % endif
@@ -53,7 +55,7 @@ namespace ${ns} {
 
 ${class_name}::${class_name}(const Json &json) {
 
-    assert(json.is_object());
+    ${assert_macro}(json.is_object());
 
 % for v in classDef.variable_defs:
 <%
@@ -104,7 +106,7 @@ ${lhs} = ${jsonValueForType(variableDef, rhs)}\
         % if v.isArray:
         auto &destination_array = ${inst_name};
         %endif
-        assert(!${temp_name}.is_null());
+        ${assert_macro}(!${temp_name}.is_null());
     % else:
     // optional
     if ( !${temp_name}.is_null() ) {
@@ -113,7 +115,7 @@ ${lhs} = ${jsonValueForType(variableDef, rhs)}\
         %endif
     % endif
     % if v.isArray:
-        assert(${temp_name}.is_array());
+        ${assert_macro}(${temp_name}.is_array());
         for( const auto array_item : ${temp_name}.array_items() ) {
         % if v.isVariant:
             % for variant in v.variantTypeList():
@@ -127,15 +129,15 @@ ${lhs} = ${jsonValueForType(variableDef, rhs)}\
             }
             % endfor
             else {
-                assert(false); // Expected to find a valid value
+                ${assert_macro}(false); // Expected to find a valid value
             }
         % elif v.type.schema_type == 'array':
             ## TODO: probably need to recursively handle arrays of arrays
-            assert(array_item.is_array());
+            ${assert_macro}(array_item.is_array());
             vector<${v.type.name}> item_array;
             destination_array.emplace_back(${v.type.name}(item_array));
         % else:
-            assert(${valueIsOfJsonInputType(v.type.schema_type, "array_item")});
+            ${assert_macro}(${valueIsOfJsonInputType(v.type.schema_type, "array_item")});
             ${capture(generateAssignmentFromJson, v, "destination_array", "array_item", lhsIsArray = True) | indent12};
         % endif
         }
@@ -156,10 +158,10 @@ ${lhs} = ${jsonValueForType(variableDef, rhs)}\
         }
         % endfor
         else {
-            assert(false); // Expected to find a valid value
+            ${assert_macro}(false); // Expected to find a valid value
         }
         % else:
-        assert(${valueIsOfJsonInputType(v.type.schema_type, temp_name)});
+        ${assert_macro}(${valueIsOfJsonInputType(v.type.schema_type, temp_name)});
         ${capture(generateAssignmentFromJson, v, inst_name, temp_name, lhsIsArray = false) | indent8};
         % endif
     % endif
@@ -328,7 +330,7 @@ for (const auto &arrayItem : ${inst_name}) {
 }
 
 Json ${class_name}::to_json() const {
-    assert(is_valid());
+    ${assert_macro}(is_valid());
     auto object = Json::object();
 % for v in classDef.variable_defs:
 <%\

@@ -59,14 +59,9 @@ has_variants = any([v.isVariant for v in classDef.variable_defs])
 #include "${dep}"
 % endfor
 % endif
-% if import_files:
-% for import_file in import_files:
-#import <${import_file}>
-% endfor
-% endif
-% if classDef.super_types:
-% for dep in classDef.super_types:
-#import "${dep}.h"
+% if include_files:
+% for include_file in include_files:
+#include "${include_file}"
 % endfor
 % endif
 
