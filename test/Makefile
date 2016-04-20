@@ -11,13 +11,9 @@ CC ?= cc
 CXX ?= c++
 LIBCXX ?= c++
 
-# About `-isystem assert`: this makes sure `<assert.h>` is found in our
-# local `assert` directory rather than the system default.  In our `assert.h` we
-# replace the assert macro with code that throws an exception rather than
-# calling abort(), and thus we can verify assertion failures in our tests.
 CFLAGS= -std=c++14 -I generated_code -I third_party \
 	-I third_party/boost/include \
-	-isystem assert
+	-I .
 
 test: generated_code/test
 	$<
@@ -26,7 +22,9 @@ generated_code/test: $(OBJS)
 	$(CXX) -lm -l$(LIBCXX) -o $@ $(OBJS)
 
 generated_code/generated_srcs.mk: $(INPUT_SCHEMAS) ../src/tr/jsonschema/jsonschema2model.py ../src/tr/jsonschema/templates_cpp/*.mako
-	$(CURDIR)/../src/js2model --namespace ft::js2model::test -o generated_code -l cpp $(INPUT_SCHEMAS)
+	$(CURDIR)/../src/js2model --namespace ft::js2model::test -o generated_code -l cpp \
+	    --assert-macro test_assert --include assert/test_assert.h \
+	    $(INPUT_SCHEMAS)
 	echo "GENERATED_SRCS=`echo generated_code/*.cpp`" > generated_code/generated_srcs.mk
 
 $(OBJDIR)/%.o : %.cpp

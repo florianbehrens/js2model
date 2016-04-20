@@ -20,27 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 </%doc>\
 <%doc>
-Utility functions
-</%doc>\
-<%!
-def firstlower(value):
-  return value[0].lower() + value[1:]
-##
-##    equalto = lambda value, other: value == other
-
-def firstupper(value):
-    return value[0].upper() + value[1:]
-
-def inst_name(value):
-##    return 'm' + value[0].upper() + value[1:]
-    return normalize_prop_name(value)
-%>\
-<%
-def normalize_class_name(value):
-##    return 'm' + value[0].upper() + value[1:]
-    return value
-%>\
-<%doc>
 Maps for mapping JSON types to Obj C types.
 </%doc>\
 <%!
@@ -53,19 +32,6 @@ Maps for mapping JSON types to Obj C types.
         'null':    'void',
         'any':     'void'
     }
-%>\
-<%doc>
-Make sure property names are valid per C++ rules.
-</%doc>\
-<%!
-    def normalize_prop_name(propName):
-        #return "id_" if propName == "id" else  propName
-        return propName
-%>\
-<%
-def inst_name(value):
-    #return 'm' + normalize_prop_name(value[0].upper() + value[1:])
-    return normalize_prop_name(value)
 %>\
 <%doc>
 Convert a JSON type to an Objective C type.
