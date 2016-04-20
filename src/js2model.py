@@ -39,8 +39,6 @@ def main():
                         help='Class name for root schema object (default: base name of file)')
     # parser.add_argument('-p', '--primitives', action='store_true', default=False,
     # help='Use primitive types in favor of object wrappers')
-    # parser.add_argument('--additional', action='store_true', default=False,
-    #                     help='Include additionalProperties in models')
     parser.add_argument('--novalidate', action='store_true', default=False, help='Skip schema validation')
     parser.add_argument('-o', '--output', default='output', help='Target directory of output files')
     parser.add_argument('--implements', default=None,
@@ -89,7 +87,6 @@ def main():
                                  super_classes=args.super.split(',') if args.super else [],
                                  interfaces=args.implements.split(',') if args.implements else [],
                                  assert_macro = args.assert_macro,
-                                 # include_additional_properties=args.additional,
                                  validate=args.novalidate,
                                  verbose=args.verbose,
                                  skip_deserialization=args.no_deserialize,

@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "typeName": "AdditionalPropertiesTest",
+    "required": [
+        "description"
+    ],
+    "properties": {
+        "description": {
+            "type": "object",
+            "typeName": "Description",
+            "required": [
+                "short_description"
+            ],
+            "properties": {
+                "short_description": {
+                    "type": "string"
+                },
+                "long_description": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "patternProperties": {
+        "^S_": { "type": "string" },
+        "^I_": { "type": "integer" }
+    },
+    "additionalProperties": { "$ref" : "#/properties/description" }
+}
+

@@ -125,6 +125,7 @@ class JsonSchemaKeywords(object):
     PROPERTIES = 'properties'
     EXTENDS = 'extends'
     ADDITIONAL_PROPERTIES = 'additionalProperties'
+    PATTERN_PROPERTIES = 'patternProperties'
     ONE_OF = 'oneOf'
 
     # Extended keywords
@@ -144,6 +145,7 @@ class ClassDef(object):
         # Class name
         self.name = None
         self.variable_defs = []
+        self.pattern_properties = []
         self.superClasses = []
         self.interfaces = []
         self.package = None
@@ -156,6 +158,7 @@ class ClassDef(object):
             'name': self.name,
             'plain_name': self.plain_name,
             'variable_defs': [x.to_dict() for x in self.variable_defs],
+            'pattern_properties': dict(self.pattern_properties),
             'superClasses': self.superClasses,
             'interfaces': self.interfaces,
             'package': self.package,
@@ -197,6 +200,10 @@ class ClassDef(object):
     @property
     def has_var_defaults(self):
         return True if len([d for d in self.variable_defs if d.default is not None]) else False
+
+    @property
+    def has_pattern_properties(self):
+        return len(self.pattern_properties) > 0
 
     @property
     def has_var_patterns(self):
@@ -415,7 +422,7 @@ class JsonSchema2Model(object):
     SCHEMA_URI = '__uri__'
 
     def __init__(self, outdir, include_files=None, super_classes=None, interfaces=None,
-                 include_additional_properties=False, assert_macro='assert',
+                 assert_macro='assert',
                  lang='objc', prefix='TR', namespace='tr', root_name=None, validate=True, verbose=False,
                  skip_deserialization=False, include_dependencies=True, template_manager=TemplateManager()):
 
@@ -425,7 +432,6 @@ class JsonSchema2Model(object):
         :param include_files:
         :param super_classes:
         :param interfaces:
-        :param include_additional_properties:
         :param assert_macro:
         :param lang:
         :param prefix:
@@ -439,7 +445,6 @@ class JsonSchema2Model(object):
         self.include_files = include_files
         self.super_classes = super_classes
         self.interfaces = interfaces
-        self.include_additional_properties = include_additional_properties
         self.assert_macro = assert_macro
         self.lang = lang
         self.prefix = prefix
@@ -504,7 +509,6 @@ class JsonSchema2Model(object):
                                         include_files=self.include_files,
                                         assert_macro=self.assert_macro,
                                         namespace=self.namespace,
-                                        include_additional_properties=self.include_additional_properties,
                                         timestamp=str(datetime.date.today()),
                                         year=int(datetime.date.today().year),
                                         file_name=src_file_name,
@@ -531,8 +535,7 @@ class JsonSchema2Model(object):
                                              namespace=self.namespace,
                                              timestamp=str(datetime.date.today()),
                                              year=int(datetime.date.today().year),
-                                             file_name=src_file_name,
-                                             include_additional_properties=self.include_additional_properties))
+                                             file_name=src_file_name))
             except:
                 print(exceptions.text_error_template().render())
                 sys.exit(-1)
@@ -558,7 +561,6 @@ class JsonSchema2Model(object):
                                              timestamp=str(datetime.date.today()),
                                              year=int(datetime.date.today().year),
                                              namespace=self.namespace,
-                                             include_additional_properties=self.include_additional_properties,
                                              file_name=src_file_name))
             except:
                 print(exceptions.text_error_template().render())
@@ -673,24 +675,18 @@ class JsonSchema2Model(object):
 
                     scope.pop()
 
-            #
-            # support for additionalProperties
-            #
-            # include_additional_properties = self.include_additional_properties if not extended else False
-
-            # if JsonSchemaKeywords.ADDITIONAL_PROPERTIES in schema_object:
-            #
-            #     additional_properties = schema_object[JsonSchemaKeywords.ADDITIONAL_PROPERTIES]
-            #
-            #     if type(additional_properties) is int and not additional_properties:
-            #         include_additional_properties = False
-            #     else:
-            #         include_additional_properties = True
-
-            # if include_additional_properties:
-            #     add_prop_var_def = VariableDef(JsonSchemaKeywords.ADDITIONAL_PROPERTIES)
-            #     add_prop_var_def.type = JsonSchemaTypes.DICT
-            #     class_def.variable_defs.append(add_prop_var_def)
+            # Pattern properties and additional properties. We parse the
+            # patternProperties declaration into an array of (regex, type)
+            # pairs. Additional properties are then appended to this array with
+            # a catchall regex (".*").
+            pattern_properties = list(schema_object.get(JsonSchemaKeywords.PATTERN_PROPERTIES, {}).items())
+            additional_properties = schema_object.get(JsonSchemaKeywords.ADDITIONAL_PROPERTIES, False)
+            if additional_properties:
+                pattern_properties.append(('.*', additional_properties))
+            for pattern, schema in pattern_properties:
+                scope.append('pattern:%s' % pattern)
+                class_def.pattern_properties.append((pattern, self.create_model(schema, scope)))
+                scope.pop()
 
             # add custom keywords
             class_def.custom = {k: v for k, v in schema_object.items() if k.startswith('#')}
