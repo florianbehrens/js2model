@@ -62,5 +62,31 @@ TEST_CASE( "Pattern properties" ) {
         auto obj = PatternPropertiesTest(testData[4]);
         REQUIRE(obj.is_valid());
         REQUIRE(obj.to_json().dump() == testData[4].dump());
+
+        REQUIRE(obj.location.has_property("loc_one"));
+        REQUIRE(obj.location.has_property("loc_2"));
+        REQUIRE(obj.location.has_property("loc_   ???***"));
+
+        REQUIRE(obj.location["loc_one"] == PatternLocation::Location::Work);
+        REQUIRE(obj.location["loc_2"] == PatternLocation::Location::Home);
+        REQUIRE(obj.location["loc_   ???***"] == PatternLocation::Location::Home);
+    }
+
+    SECTION( "get_property_or works correctly" ) {
+        auto obj = PatternLocation();
+        auto key = "loc_number_one";
+
+        // No keys should be set
+        REQUIRE_FALSE(obj.has_property(key));
+
+        // get_property_or should return the default value,
+        // and not modify the object
+        REQUIRE(obj.get_property_or(key, PatternLocation::Location::Home) == PatternLocation::Location::Home);
+        REQUIRE_FALSE(obj.has_property(key));
+
+        // Set the value. get_property_or should now return it
+        obj[key] = PatternLocation::Location::Work;
+        REQUIRE(obj.has_property(key));
+        REQUIRE(obj.get_property_or(key, PatternLocation::Location::Home) == PatternLocation::Location::Work);
     }
 }
