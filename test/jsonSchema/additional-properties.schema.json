@@ -22,10 +22,6 @@
             }
         }
     },
-    "patternProperties": {
-        "^S_": { "type": "string" },
-        "^I_": { "type": "integer" }
-    },
     "additionalProperties": { "$ref" : "#/properties/description" }
 }
 

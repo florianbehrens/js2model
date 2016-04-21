@@ -21,20 +21,12 @@ THE SOFTWARE.
 </%doc>
 <%inherit file="base.mako" />
 <%namespace name="base" file="base.mako" />
-<%block name="code">
-#include "${classDef.header_file}"
 
-% if assert_macro == "assert":
-#include <assert.h>
-% endif
-% if classDef.has_var_patterns:
-#include <regex>
-% endif
-#include <vector>
-
-using namespace std;
-using namespace json11;
-
+<%doc>
+Indentation helpers, used to indent the output of other def() calls
+Sample usage:
+    ${capture(generateAssignmentFromJson, v, "destination_array", "array_item", lhsIsArray = True) | indent12};
+</%doc>
 <%!
 import functools
 def indent(indent_level, str):
@@ -46,22 +38,10 @@ indent12 = functools.partial(indent, 12)
 indent16 = functools.partial(indent, 16)
 
 %>\
-<%
-class_name = classDef.name
-%>\
-% for ns in namespace.split('::'):
-namespace ${ns} {
-% endfor
 
-${class_name}::${class_name}(const Json &json) {
-
-    ${assert_macro}(json.is_object());
-
-% for v in classDef.variable_defs:
-<%
-inst_name = "this->" + v.name
-temp_name = v.name + "Temp"
-%>\
+<%doc>
+Emit the json11 is_*() check for the given value and schema type
+</%doc>
 <%def name='valueIsOfJsonInputType(json_schema_type, jsonValue)'>\
 % if json_schema_type == 'string':
 ${jsonValue}.is_string()\
@@ -75,13 +55,17 @@ ${jsonValue}.is_bool()\
 ${jsonValue}.is_object()\
 % endif
 </%def>\
+
+<%doc>
+Emit an expression that instantiates a native instance from a json11 value
+</%doc>
 <%def name='jsonValueForType(variableDef, jsonValue)'>\
 % if variableDef.type.schema_type == 'string':
-% if variableDef.type.isEnum:
+    % if variableDef.type.isEnum:
 string_to_${variableDef.json_name}(${jsonValue}.string_value())\
-% else:
+    % else:
 ${jsonValue}.string_value()\
-% endif
+    % endif
 % elif variableDef.type.schema_type == 'integer':
 int(${jsonValue}.number_value())\
 % elif variableDef.type.schema_type == 'number':
@@ -92,13 +76,82 @@ ${jsonValue}.bool_value()\
 ${variableDef.type.name}(${jsonValue})\
 % endif
 </%def>\
-<%def name='generateAssignmentFromJson(variableDef, lhs, rhs, lhsIsArray = False)'>\
+
+<%doc>
+Emit an expression that takes a json11 value on the RHS, and assigns to a variable
+or emplaces into an array on the lhs.
+</%doc>
+<%def name='generateBasicAssignmentFromJson(variableDef, lhs, rhs, lhsIsArray = False)'>\
 % if lhsIsArray:
-${lhs}.emplace_back(${jsonValueForType(variableDef, rhs)})\
+${lhs}.emplace_back(${jsonValueForType(variableDef, rhs)});\
 % else:
-${lhs} = ${jsonValueForType(variableDef, rhs)}\
+${lhs} = ${jsonValueForType(variableDef, rhs)};\
 % endif
 </%def>\
+
+<%doc>
+Emit full code for an assignment of a json11 value to a native instance. The emitted block
+is aware of variant types.
+</%doc>
+<%def name='generateAssignmentFromJson(variableDef, lhs, rhs, lhsIsArray = False)'>\
+% if variableDef.isVariant:
+    % for variant in variableDef.variantTypeList():
+${"if" if loop.first else "else if"} (${valueIsOfJsonInputType(variant["json_schema_type"], rhs)}\
+        % if variant["json_schema_type"] == "object":
+ && ${rhs}["${variableDef.variantTypeIdPath}"] == "${variant["json_type_id"]}"\
+        % endif
+) {
+    ${capture(generateBasicAssignmentFromJson, variant["variable_def"], lhs, rhs, lhsIsArray) | indent4}
+}
+    % endfor
+else {
+    ${assert_macro}(false); // Expected to find a valid value
+}
+% else:
+${assert_macro}(${valueIsOfJsonInputType(variableDef.type.schema_type, rhs)});
+${generateBasicAssignmentFromJson(variableDef, lhs, rhs, lhsIsArray)}
+% endif
+</%def>\
+
+<%doc>
+This block contains the generated code
+</%doc>
+<%block name="code">
+#include "${classDef.header_file}"
+
+% if assert_macro == "assert":
+#include <assert.h>
+% endif
+% if classDef.has_var_patterns or classDef.has_pattern_properties:
+#include <regex>
+% endif
+% if classDef.has_pattern_properties:
+#include <unordered_set>
+% endif
+#include <vector>
+
+using namespace std;
+using namespace json11;
+
+<%
+class_name = classDef.name
+%>\
+% for ns in namespace.split('::'):
+namespace ${ns} {
+% endfor
+
+<%doc>
+Constructor from Json object
+</%doc>\
+${class_name}::${class_name}(const Json &json) {
+
+    ${assert_macro}(json.is_object());
+
+% for v in classDef.variable_defs:
+<%
+inst_name = "this->" + v.name
+temp_name = v.name + "Temp"
+%>\
     auto ${temp_name} = json["${v.json_name}"];
     % if not v.isOptional:
     // required
@@ -116,60 +169,50 @@ ${lhs} = ${jsonValueForType(variableDef, rhs)}\
     % endif
     % if v.isArray:
         ${assert_macro}(${temp_name}.is_array());
-        for( const auto array_item : ${temp_name}.array_items() ) {
-        % if v.isVariant:
-            % for variant in v.variantTypeList():
-            ${"if" if loop.first else "else if"} (${valueIsOfJsonInputType(variant["json_schema_type"], "array_item")}\
-% if variant["json_schema_type"] == "object":
- && array_item["${v.variantTypeIdPath}"] == "${variant["json_type_id"]}") {
-% else:
-) {
-% endif
-                ${capture(generateAssignmentFromJson, variant["variable_def"], "destination_array", "array_item", lhsIsArray = True) | indent16};
-            }
-            % endfor
-            else {
-                ${assert_macro}(false); // Expected to find a valid value
-            }
-        % elif v.type.schema_type == 'array':
-            ## TODO: probably need to recursively handle arrays of arrays
-            ${assert_macro}(array_item.is_array());
-            vector<${v.type.name}> item_array;
-            destination_array.emplace_back(${v.type.name}(item_array));
-        % else:
-            ${assert_macro}(${valueIsOfJsonInputType(v.type.schema_type, "array_item")});
-            ${capture(generateAssignmentFromJson, v, "destination_array", "array_item", lhsIsArray = True) | indent12};
-        % endif
+        for( const auto &array_item : ${temp_name}.array_items() ) {
+            ${capture(generateAssignmentFromJson, v, "destination_array", "array_item", lhsIsArray = True) | indent12}
         }
         % if v.isOptional:
         // Copy the constructed array into the optional<vector>
         ${inst_name} = destination_array;
         % endif
     % else:
-        % if v.isVariant:
-        % for variant in v.variantTypeList():
-        ${"if" if loop.first else "else if"} (${valueIsOfJsonInputType(variant["json_schema_type"], temp_name)}\
-% if variant["json_schema_type"] == "object":
- && ${temp_name}["${v.variantTypeIdPath}"] == "${variant["json_type_id"]}") {
-% else:
- ) {
-% endif
-            ${capture(generateAssignmentFromJson, variant["variable_def"], inst_name, temp_name, lhsIsArray = False) | indent12};
-        }
-        % endfor
-        else {
-            ${assert_macro}(false); // Expected to find a valid value
-        }
-        % else:
-        ${assert_macro}(${valueIsOfJsonInputType(v.type.schema_type, temp_name)});
-        ${capture(generateAssignmentFromJson, v, inst_name, temp_name, lhsIsArray = false) | indent8};
-        % endif
+        ${capture(generateAssignmentFromJson, v, inst_name, temp_name) | indent8}
     % endif
     }
 
-    % endfor
+% endfor
+% if classDef.has_pattern_properties:
+<%
+assert(len(classDef.pattern_properties) == 1)
+pattern, variableDef = classDef.pattern_properties[0]
+varType = base.attr.convertType(variableDef)
+if (variableDef.type.isEnum):
+    varType = class_name + "::" + varType
+acceptsAnyKey = (pattern == '.*')
+%>\
+    // Assign all other properties to pattern properties
+    for (const auto kv : json.object_items()) {
+        if (!is_valid_key(kv.first)) {
+            continue;
+        }
+    % if variableDef.isArray:
+        ${assert_macro}(kv.second.is_array());
+        auto destination_array = ${varType}();
+        for( const auto array_item : kv.second.array_items() ) {
+            ${capture(generateAssignmentFromJson, variableDef, "destination_array", "array_item", lhsIsArray = True) | indent12}
+        }
+        (*this)[kv.first] = destination_array;
+    % else:
+        ${capture(generateAssignmentFromJson, variableDef, "(*this)[kv.first]", "kv.second") | indent8}
+    % endif
+    }
+% endif
 }
 
+<%doc>
+is_valid()
+</%doc>\
 bool ${class_name}::is_valid() const {
     try {
         check_valid();
@@ -179,6 +222,9 @@ bool ${class_name}::is_valid() const {
     return true;
 }
 
+<%doc>
+check_valid()
+</%doc>\
 void ${class_name}::check_valid() const {
 % for v in classDef.variable_defs:
 <%
@@ -329,6 +375,9 @@ for (const auto &arrayItem : ${inst_name}) {
 % endfor
 }
 
+<%doc>
+to_json()
+</%doc>\
 Json ${class_name}::to_json() const {
     ${assert_macro}(is_valid());
     auto object = Json::object();
@@ -403,7 +452,6 @@ object["${var_def.json_name}"] = ${inst_name};
 % endfor
     return Json(object);
 }
-
 % for v in classDef.variable_defs:
 % if v.isVariant:
 <%
@@ -412,6 +460,7 @@ inst_name = inst_name + "Value" if v.isArray else inst_name
 accessor = inst_name + ".get()" if v.isOptional and not v.isArray else inst_name
 variant_type_return = "boost::optional<std::string>" if v.isOptional and not v.isArray else "std::string"
 %>\
+
 % if v.isArray:
 ${variant_type_return} ${class_name}::${inst_name}Type(const ${base.attr.arrayItemType(v)}& ${inst_name}) const
 % else:
@@ -440,11 +489,13 @@ ${variant_type_return} ${class_name}::${inst_name}Type() const
     };
     return boost::apply_visitor(${inst_name}_get_type(), ${accessor});
 }
-
 % endif
 % endfor
+<%doc>
+Enum handling: enum_to_string and string_to_enum for all enums in class
+</%doc>\
+% for enumDef in classDef.enum_defs:
 
-% for enumDef in [x.type.enum_def for x in classDef.variable_defs if x.type.enum_def]:
 std::string ${class_name}::${enumDef.plain_name}_to_string(const ${class_name}::${enumDef.name} &val)
 {
     switch (val) {
@@ -466,6 +517,59 @@ ${class_name}::${enumDef.name} ${class_name}::string_to_${enumDef.plain_name}(co
     return values.at(key);
 }
 % endfor
+<%doc>
+
+Pattern properties support
+
+</%doc>\
+% if classDef.has_pattern_properties:
+<%
+assert(len(classDef.pattern_properties) == 1)
+pattern, variableDef = classDef.pattern_properties[0]
+varType = base.attr.convertType(variableDef)
+if (variableDef.type.isEnum):
+    varType = class_name + "::" + varType
+acceptsAnyKey = (pattern == '.*')
+%>\
+
+${varType}& ${class_name}::operator[](const std::string &key) {
+    ${assert_macro}(is_valid_key(key));
+    if (!is_valid_key(key)) {
+        throw invalid_argument(string("invalid key ") + key);
+    }
+    return _patternProperties[key];
+}
+
+bool ${class_name}::is_valid_key(const std::string &key) const {
+    return !is_intrinsic_key(key)\
+% if not acceptsAnyKey:
+ && regex_match(key, regex(R"_(${pattern})_", regex_constants::ECMAScript))\
+% endif
+;
+}
+
+bool ${class_name}::has_property(const std::string &key) const {
+    return _patternProperties.find(key) != _patternProperties.end();
+}
+
+const ${varType}& ${class_name}::get_property_or(const std::string &key, const ${varType} &defaultValue) const {
+    auto iter = _patternProperties.find(key);
+    return iter != _patternProperties.end() ? iter->second : defaultValue;
+}
+
+bool ${class_name}::is_intrinsic_key(const std::string &key) const {
+% if len(classDef.variable_defs):
+    static unordered_set<string> intrinsicProperties = {
+    % for v in classDef.variable_defs:
+        "${v.name}"
+    % endfor
+    };
+    return intrinsicProperties.find(key) != intrinsicProperties.end();
+% else:
+    return false;
+% endif
+}
+% endif
 
 % for ns in reversed(namespace.split('::')):
 } // namespace ${ns}

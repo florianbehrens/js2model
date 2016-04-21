@@ -1,0 +1,45 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "typeName": "PatternPropertiesTest",
+    "required": [
+        "description"
+    ],
+    "properties": {
+        "int_builtinProperty": { "type": "string" },
+        "location": {
+            "type": "object",
+            "typeName": "PatternLocation",
+            "patternProperties": {
+                "^loc_": {
+                    "enum": ["home", "work"]
+                }
+            }
+        },
+        "numbers": {
+            "type": "object",
+            "typeName": "PatternPhoneNumbers",
+            "patternProperties": {
+                "^number_": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "typeName": "PatternPhoneNumber",
+                        "required": ["number"],
+                        "minItems": 1,
+                        "properties": {
+                            "number": {
+                                "type": "string",
+                                "pattern": "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "patternProperties": {
+        "^int_": { "type": "integer" }
+    }
+}
+

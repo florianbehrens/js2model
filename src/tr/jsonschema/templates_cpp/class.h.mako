@@ -75,7 +75,7 @@ superClass = classDef.superClasses[0] if len(classDef.superClasses) else None
 class ${class_name + ((': protected ' + superClass) if superClass else '')}
 {
 public:
-% for e in [x.type.enum_def for x in classDef.variable_defs if x.type.enum_def]:
+% for e in classDef.enum_defs:
 ${enumDecl(e)}
 % endfor
 % for v in classDef.variable_defs:
@@ -91,9 +91,6 @@ variant_type_return = "boost::optional<std::string>" if v.isOptional and not v.i
 % endif
 % endif
 % endfor
-% if include_additional_properties:
-    std::unordered_map<std::string, std::string> additionalProperties;
-% endif
 
 public:
     ${class_name}() = default;
@@ -106,6 +103,44 @@ public:
     void check_valid() const;
 
     json11::Json to_json() const;
+% if classDef.has_pattern_properties:
+<%
+assert(len(classDef.pattern_properties) == 1)
+pattern, variableDef = classDef.pattern_properties[0]
+varType = base.attr.convertType(variableDef)
+acceptsAnyKey = (pattern == '.*')
+%>
+    // Get or set additional properties. Like std::map, this will
+    // insert a default constructed value if no value exists.
+% if not acceptsAnyKey:
+    // It will also throw if the property key doesn't match the
+    // allowed pattern "${pattern}".
+% endif
+    ${varType}& operator[](const std::string &key);
+
+    // Test to see if the property key value is valid. It must not
+    // match the name of an existing property\
+% if acceptsAnyKey:
+.
+% else:
+, and must match the pattern "${pattern}".
+% endif
+    bool is_valid_key(const std::string &key) const;
+
+    // Test to see if the property is set.
+    bool has_property(const std::string &key) const;
+
+    // Get a property value if set, or return a default value.
+% if not acceptsAnyKey:
+    // It will return the default value if the property key doesn't
+    // match the allowed pattern "${pattern}".
+% endif
+    const ${varType}& get_property_or(const std::string &key, const ${varType} &defaultValue) const;
+
+private:
+    bool is_intrinsic_key(const std::string &key) const;
+    std::map<std::string, ${varType}> _patternProperties;
+% endif
 }; // class ${class_name}
 
 % for ns in reversed(namespace.split('::')):

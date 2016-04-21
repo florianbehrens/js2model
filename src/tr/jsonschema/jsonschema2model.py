@@ -177,7 +177,7 @@ class ClassDef(object):
         # for dep in [ivar.type for ivar in self.variable_defs if ivar.schemaType == JsonSchemaTypes.OBJECT]:
         # dependencies.add(dep)
 
-        for var_def in self.variable_defs:
+        for var_def in self.variable_defs + [v for p,v in self.pattern_properties]:
             if var_def.type.header_file:
                 dependencies.add(var_def.type.header_file)
             if var_def.isVariant:
@@ -196,6 +196,12 @@ class ClassDef(object):
             supertypes.add(interface)
 
         return supertypes
+
+    @property
+    def enum_defs(self):
+        enum_defs = [x.type.enum_def for x in self.variable_defs if x.type.enum_def]
+        enum_defs += [x.type.enum_def for p,x in self.pattern_properties if x.type.enum_def]
+        return enum_defs
 
     @property
     def has_var_defaults(self):
@@ -474,8 +480,8 @@ class JsonSchema2Model(object):
         conventions = self.template_manager.get_conventions(self.lang)
 
         for classDef in self.models.values():
-            if len(classDef.variable_defs) == 0:
-                # print("Not emitting empty class %s" % classDef.name)
+            if len(classDef.variable_defs) == 0 and len(classDef.pattern_properties) == 0:
+                print("Not emitting empty class %s" % classDef.name)
                 continue
             # from pprint import pprint
             # pprint(classDef)
@@ -684,9 +690,17 @@ class JsonSchema2Model(object):
             if additional_properties:
                 pattern_properties.append(('.*', additional_properties))
             for pattern, schema in pattern_properties:
-                scope.append('pattern:%s' % pattern)
-                class_def.pattern_properties.append((pattern, self.create_model(schema, scope)))
-                scope.pop()
+                # scope.append('pattern:%s' % pattern)
+                pattern_var_def = self.create_model(schema, scope)
+                pattern_var_def.isRequired = True
+                class_def.pattern_properties.append((pattern, pattern_var_def))
+                # scope.pop()
+
+            # For simplicity, we only accept one patternProperties or additionalProperties
+            # directive in a class. Revisit if we find we need to change that.
+            if len(pattern_properties) > 1:
+                import json
+                raise ValueError('Only one patternProperties or additionalProperties directive may appear in a schema\n' + json.dumps(deepcopy(schema_object), indent=2))
 
             # add custom keywords
             class_def.custom = {k: v for k, v in schema_object.items() if k.startswith('#')}
