@@ -4,7 +4,7 @@
 #include "catch.hpp"
 #include "optional_io.hpp"
 
-#include "AdditionalPropertiesTest.h"
+#include "PatternPropertiesTest.h"
 
 using namespace boost;
 using namespace json11;
@@ -13,7 +13,7 @@ using namespace std;
 using namespace ft::js2model::test;
 
 static Json LoadTestData() {
-    ifstream data("jsonData/additional-properties-test.data.json");
+    ifstream data("jsonData/pattern-properties-test.data.json");
     stringstream buffer;
     buffer << data.rdbuf();
     string error;
@@ -25,36 +25,42 @@ static Json LoadTestData() {
     return testData;
 }
 
-// TEST_CASE( "xxx Additional properties" ) {
-//     auto testData = LoadTestData();
+TEST_CASE( "Pattern properties" ) {
+    auto testData = LoadTestData();
 
-//     SECTION( "No additional properties are required" ) {
-//         auto obj = AdditionalPropertiesTest(testData[0]);
-//         REQUIRE(obj.is_valid());
-//         REQUIRE_FALSE(obj.has_property("anotherDescription"));
-//         REQUIRE(obj.to_json().dump() == testData[0].dump());
-//     }
+    SECTION( "No pattern properties are required" ) {
+        auto obj = PatternPropertiesTest(testData[0]);
+        REQUIRE(obj.is_valid());
+        REQUIRE_FALSE(obj.has_property("anotherDescription"));
+        REQUIRE(obj.to_json().dump() == testData[0].dump());
+    }
 
-//     SECTION( "Additional properties are accepted" ) {
-//         auto obj = AdditionalPropertiesTest(testData[1]);
-//         REQUIRE(obj.has_property("anotherDescription"));
-//         REQUIRE(obj["anotherDescription"].shortDescription == "another is short");
-//         REQUIRE(obj["anotherDescription"].longDescription.get() == "another is long");
-//         REQUIRE(obj.is_valid());
-//         REQUIRE(obj.to_json().dump() == testData[0].dump());
-//     }
+    SECTION( "Pattern properties specifications are enforced" ) {
+        REQUIRE_FALSE(PatternPropertiesTest::is_valid_key("location"));
+        REQUIRE_FALSE(PatternPropertiesTest::is_valid_key("phoneNumbers"));
+        REQUIRE_FALSE(PatternPropertiesTest::is_valid_key("prop_builtinProperty"));
 
-//     SECTION( "Additional properties are subject to validation" ) {
-//         REQUIRE_THROWS_AS(auto obj = AdditionalPropertiesTest(testData[2]), AssertFailedError);
-//     }
+        REQUIRE(PatternPropertiesTest::is_valid_key("prop_XXX"));
+        REQUIRE_FALSE(PatternPropertiesTest::is_valid_key("XXX"));
+    }
 
-//     SECTION( "Additional properties with crazy keys are accepted" ) {
-//         auto obj = AdditionalPropertiesTest(testData[3]);
-//         REQUIRE(obj.has_property("*** ??? !!! :)"));
-//         REQUIRE(obj["*** ??? !!! :)"].shortDescription == "is short");
-//         REQUIRE(obj["*** ??? !!! :)"].longDescription == boost::none);
-//         REQUIRE(obj.is_valid());
-//         REQUIRE(obj.to_json().dump() == testData[0].dump());
-//     }
+    SECTION( "Pattern properties are subject to validation" ) {
+        REQUIRE_THROWS_AS(auto obj = PatternPropertiesTest(testData[1]), out_of_range);
 
-// }
+        auto obj = PatternPropertiesTest(testData[2]);
+        REQUIRE_FALSE(obj.is_valid());
+    }
+
+    SECTION( "Non-matching pattern properties are skipped" ) {
+        // locWork doesn't match the pattern
+        auto obj = PatternPropertiesTest(testData[3]);
+        REQUIRE(obj.is_valid());
+        REQUIRE(obj.location.to_json().dump() == "{}");
+    }
+
+    SECTION( "Pattern properties are accepted" ) {
+        auto obj = PatternPropertiesTest(testData[4]);
+        REQUIRE(obj.is_valid());
+        REQUIRE(obj.to_json().dump() == testData[4].dump());
+    }
+}

@@ -125,7 +125,7 @@ acceptsAnyKey = (pattern == '.*')
 % else:
 , and must match the pattern "${pattern}".
 % endif
-    bool is_valid_key(const std::string &key) const;
+    static bool is_valid_key(const std::string &key);
 
     // Test to see if the property is set.
     bool has_property(const std::string &key) const;
@@ -138,7 +138,7 @@ acceptsAnyKey = (pattern == '.*')
     const ${varType}& get_property_or(const std::string &key, const ${varType} &defaultValue) const;
 
 private:
-    bool is_intrinsic_key(const std::string &key) const;
+    static bool is_intrinsic_key(const std::string &key);
     std::map<std::string, ${varType}> _patternProperties;
 % endif
 }; // class ${class_name}

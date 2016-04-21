@@ -366,7 +366,7 @@ pattern, variableDef = classDef.pattern_properties[0]
 % endif
 % endif
 }
-\
+
 <%doc>
 Helper routine for to_json()
 </%doc>\
@@ -541,7 +541,7 @@ ${varType}& ${class_name}::operator[](const std::string &key) {
     return _patternProperties[key];
 }
 
-bool ${class_name}::is_valid_key(const std::string &key) const {
+bool ${class_name}::is_valid_key(const std::string &key) {
     return !is_intrinsic_key(key)\
 % if not acceptsAnyKey:
  && regex_match(key, regex(R"_(${pattern})_", regex_constants::ECMAScript))\
@@ -558,11 +558,11 @@ const ${varType}& ${class_name}::get_property_or(const std::string &key, const $
     return iter != _patternProperties.end() ? iter->second : defaultValue;
 }
 
-bool ${class_name}::is_intrinsic_key(const std::string &key) const {
+bool ${class_name}::is_intrinsic_key(const std::string &key) {
 % if len(classDef.variable_defs):
     static unordered_set<string> intrinsicProperties = {
     % for v in classDef.variable_defs:
-        "${v.name}"
+        "${v.json_name}",
     % endfor
     };
     return intrinsicProperties.find(key) != intrinsicProperties.end();

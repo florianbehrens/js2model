@@ -3,24 +3,24 @@
     "type": "object",
     "typeName": "PatternPropertiesTest",
     "required": [
-        "description"
+        "prop_builtinProperty", "location", "phoneNumbers"
     ],
     "properties": {
-        "int_builtinProperty": { "type": "string" },
+        "prop_builtinProperty": { "type": "string" },
         "location": {
             "type": "object",
             "typeName": "PatternLocation",
             "patternProperties": {
-                "^loc_": {
+                "^loc_.*": {
                     "enum": ["home", "work"]
                 }
             }
         },
-        "numbers": {
+        "phoneNumbers": {
             "type": "object",
             "typeName": "PatternPhoneNumbers",
             "patternProperties": {
-                "^number_": {
+                "^number_.*": {
                     "type": "array",
                     "items": {
                         "type": "object",
@@ -39,7 +39,10 @@
         }
     },
     "patternProperties": {
-        "^int_": { "type": "integer" }
+        "^prop_.*": {
+            "type": "integer",
+            "minimum": 0
+        }
     }
 }
 
