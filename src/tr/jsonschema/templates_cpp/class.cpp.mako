@@ -29,6 +29,10 @@ Sample usage:
 </%doc>
 <%!
 import functools
+
+def quote(str):
+    return '"' + str + '"'
+
 def indent(indent_level, str):
     return str.replace("\n", "\n" + " " * indent_level).rstrip()
 
@@ -110,6 +114,118 @@ else {
 % else:
 ${assert_macro}(${valueIsOfJsonInputType(variableDef.type.schema_type, rhs)});
 ${generateBasicAssignmentFromJson(variableDef, lhs, rhs, lhsIsArray)}
+% endif
+</%def>\
+
+<%doc>
+String validation
+</%doc>
+<%def name='emit_string_validation_checks(inst_name, var_def)'>\
+% if var_def.minLength is not None:
+if (${inst_name}.size() < ${var_def.minLength})
+    throw out_of_range("${var_def.name} too short");
+% endif
+% if var_def.maxLength is not None:
+if (${inst_name}.size() > ${var_def.maxLength})
+    throw out_of_range("${var_def.name} too long");
+% endif
+% if var_def.pattern:
+auto ${var_def.name}_regex = regex(R"_(${var_def.pattern})_", regex_constants::ECMAScript);
+if (!regex_match(${inst_name}, ${var_def.name}_regex))
+    throw invalid_argument("${var_def.name} doesn't match regex pattern");
+% endif
+</%def>\
+
+<%doc>
+Number validation
+</%doc>
+<%def name='emit_numeric_validation_checks(inst_name, var_def)'>\
+% if var_def.minimum is not None:
+<% op = "<=" if var_def.exclusiveMinimum else "<" %>\
+if (${inst_name} ${op} ${var_def.minimum})
+    throw out_of_range("${var_def.name} too small");
+% endif
+% if var_def.maximum is not None:
+<% op = ">=" if var_def.exclusiveMaximum else ">" %>\
+if (${inst_name} ${op} ${var_def.maximum})
+    throw out_of_range("${var_def.name} too large");
+% endif
+</%def>\
+
+<%doc>
+Object validation
+</%doc>
+<%def name='emit_object_validation_checks(inst_name, var_def)'>\
+${inst_name}.check_valid();
+</%def>\
+
+<%doc>
+Variant validation
+</%doc>
+<%def name='emit_variant_validation_checks(inst_name, var_def)'>\
+class ${var_def.name}_validator : public boost::static_visitor<void>
+{
+public:
+% for variant in var_def.variantTypeList():
+    % if variant["json_schema_type"] == "object":
+    void operator()(const ${variant["native_type"]} &value) const {
+        value.check_valid();
+    }
+    % else:
+    void operator()(const ${base.attr.typeMap[variant["json_schema_type"]]} &value) const {
+        // TODO - support for multiple variant types is limited
+        // value.check_valid();
+    }
+    % endif
+% endfor
+};
+boost::apply_visitor(${var_def.name}_validator(), ${inst_name});
+</%def>\
+
+<%doc>
+Array validation
+</%doc>
+<%def name='emit_array_validation_checks(inst_name, var_def)'>\
+% if var_def.minItems is not None:
+if (${inst_name}.size() < ${var_def.minItems})
+    throw out_of_range("Array ${var_def.name} has too few items");
+% endif
+% if var_def.maxItems is not None:
+if (${inst_name}.size() > ${var_def.maxItems})
+    throw out_of_range("Array ${var_def.name} has too many items");
+% endif
+% if var_def.has_string_validation_checks or var_def.has_numeric_validation_checks or var_def.has_object_validation_checks or var_def.isVariant:
+for (const auto &arrayItem : ${inst_name}) {
+% if var_def.has_string_validation_checks:
+    ${capture(emit_string_validation_checks, "arrayItem", var_def) | indent4}
+% endif
+% if var_def.has_numeric_validation_checks:
+    ${capture(emit_numeric_validation_checks, "arrayItem", var_def) | indent4}
+% endif
+% if var_def.has_object_validation_checks:
+    ${capture(emit_object_validation_checks, "arrayItem", var_def) | indent4}
+% endif
+% if var_def.isVariant:
+    ${capture(emit_variant_validation_checks, "arrayItem", var_def) | indent4}
+% endif
+}
+% endif
+</%def>\
+
+<%doc>
+Validation for a non-optional instance
+</%doc>
+<%def name='emit_validation_checks(inst_name, v)'>\
+% if v.isArray:
+${capture(emit_array_validation_checks, inst_name, v)}
+% elif v.has_string_validation_checks:
+${capture(emit_string_validation_checks, inst_name, v)}
+% elif v.has_numeric_validation_checks:
+${capture(emit_numeric_validation_checks, inst_name, v)}
+% elif v.has_object_validation_checks:
+${capture(emit_object_validation_checks, inst_name, v)}
+% elif v.isVariant:
+${capture(emit_variant_validation_checks, inst_name, v)}
 % endif
 </%def>\
 
@@ -227,166 +343,34 @@ check_valid()
 </%doc>\
 void ${class_name}::check_valid() const {
 % for v in classDef.variable_defs:
-<%
-optional_inst_name = "this->" + v.name
-inst_name = optional_inst_name + ".get()" if v.isOptional else optional_inst_name
-
-has_array_validation_checks = (v.minItems is not None or
-                               v.maxItems is not None)
-
-has_string_validation_checks = (v.minLength is not None or
-                                v.maxLength is not None or
-                                v.pattern is not None)
-
-has_numeric_validation_checks = (v.minimum is not None or
-                                 v.maximum is not None)
-
-has_object_validation_checks = v.type.schema_type == "object"
-
-has_any_validation_checks = (has_array_validation_checks or
-                             has_string_validation_checks or
-                             has_numeric_validation_checks or
-                             has_object_validation_checks or
-                             v.isVariant)
-%>\
-<%def name='emit_string_validation_checks(inst_name, var_def)'>\
-% if var_def.minLength is not None:
-if (${inst_name}.size() < ${var_def.minLength})
-    throw out_of_range("${var_def.name} too short");
-% endif
-% if var_def.maxLength is not None:
-if (${inst_name}.size() > ${var_def.maxLength})
-    throw out_of_range("${var_def.name} too long");
-% endif
-% if var_def.pattern:
-auto ${var_def.name}_regex = regex(R"_(${var_def.pattern})_", regex_constants::ECMAScript);
-if (!regex_match(${inst_name}, ${var_def.name}_regex))
-    throw invalid_argument("${var_def.name} doesn't match regex pattern");
-% endif
-</%def>\
-\
-<%def name='emit_numeric_validation_checks(inst_name, var_def)'>\
-% if var_def.minimum is not None:
-<% op = "<=" if var_def.exclusiveMinimum else "<" %>\
-if (${inst_name} ${op} ${var_def.minimum})
-    throw out_of_range("${var_def.name} too small");
-% endif
-% if var_def.maximum is not None:
-<% op = ">=" if var_def.exclusiveMaximum else ">" %>\
-if (${inst_name} ${op} ${var_def.maximum})
-    throw out_of_range("${var_def.name} too large");
-% endif
-</%def>\
-\
-<%def name='emit_object_validation_checks(inst_name, var_def)'>\
-${inst_name}.check_valid();
-</%def>\
-\
-<%def name='emit_variant_validation_checks(inst_name, var_def)'>\
-class ${var_def.name}_validator : public boost::static_visitor<void>
-{
-public:
-% for variant in v.variantTypeList():
-    % if variant["json_schema_type"] == "object":
-    void operator()(const ${variant["native_type"]} &value) const {
-        value.check_valid();
-    }
-    % else:
-    void operator()(const ${base.attr.typeMap[variant["json_schema_type"]]} &value) const {
-        // TODO - support for multiple variant types is limited
-        // value.check_valid();
-    }
-    % endif
-% endfor
-};
-boost::apply_visitor(${var_def.name}_validator(), ${inst_name});
-</%def>\
-\
-<%def name='emit_array_validation_checks(inst_name, var_def)'>\
-% if has_array_validation_checks:
-% if var_def.minItems is not None:
-if (${inst_name}.size() < ${var_def.minItems})
-    throw out_of_range("Array ${var_def.name} has too few items");
-% endif
-% if var_def.maxItems is not None:
-if (${inst_name}.size() > ${var_def.maxItems})
-    throw out_of_range("Array ${var_def.name} has too many items");
-% endif
-% endif
-% if has_string_validation_checks or has_numeric_validation_checks or has_object_validation_checks or var_def.isVariant:
-for (const auto &arrayItem : ${inst_name}) {
-% if has_string_validation_checks:
-    ${capture(emit_string_validation_checks, "arrayItem", var_def) | indent4}
-% endif
-% if has_numeric_validation_checks:
-    ${capture(emit_numeric_validation_checks, "arrayItem", var_def) | indent4}
-% endif
-% if has_object_validation_checks:
-    ${capture(emit_object_validation_checks, "arrayItem", var_def) | indent4}
-% endif
-% if var_def.isVariant:
-    ${capture(emit_variant_validation_checks, "arrayItem", var_def) | indent4}
-% endif
-}
-% endif
-</%def>\
-\
-% if not has_any_validation_checks:
-<% continue %>\
-% endif
-\
+% if v.has_any_validation_checks:
 % if v.isOptional:
-    if (${optional_inst_name}.is_initialized()) {
-% if v.isArray:
-        ${capture(emit_array_validation_checks, inst_name, v) | indent8}
-% else:
-% if has_string_validation_checks:
-        ${capture(emit_string_validation_checks, inst_name, v) | indent8}
-% endif
-% if has_numeric_validation_checks:
-        ${capture(emit_numeric_validation_checks, inst_name, v) | indent8}
-% endif
-% if has_object_validation_checks:
-        ${capture(emit_object_validation_checks, inst_name, v) | indent8}
-% endif
-% if v.isVariant:
-        ${capture(emit_variant_validation_checks, inst_name, v) | indent8}
-% endif
-% endif
+    if (${v.name}.is_initialized()) {
+        ${capture(emit_validation_checks, v.name + ".get()", v) | indent8}
     }
 % else:
-% if v.isArray:
-    ${capture(emit_array_validation_checks, inst_name, v) | indent4}
-% else:
-% if has_string_validation_checks:
-    ${capture(emit_string_validation_checks, inst_name, v) | indent4}
-% endif
-% if has_numeric_validation_checks:
-    ${capture(emit_numeric_validation_checks, inst_name, v) | indent4}
-% endif
-% if has_object_validation_checks:
-    ${capture(emit_object_validation_checks, inst_name, v) | indent4}
-% endif
-% if v.isVariant:
-    ${capture(emit_variant_validation_checks, inst_name, v) | indent4}
-% endif
+    ${capture(emit_validation_checks, v.name, v) | indent4}
 % endif
 % endif
 % endfor
-}
-
-<%doc>
-to_json()
-</%doc>\
-Json ${class_name}::to_json() const {
-    ${assert_macro}(is_valid());
-    auto object = Json::object();
-% for v in classDef.variable_defs:
-<%\
-optional_inst_name = "this->" + v.name
-inst_name = optional_inst_name + ".get()" if v.isOptional else optional_inst_name
+% if classDef.has_pattern_properties:
+<%
+assert(len(classDef.pattern_properties) == 1)
+pattern, variableDef = classDef.pattern_properties[0]
 %>\
-<%def name='emit_assignment(var_def)'>\
+% if variableDef.has_any_validation_checks:
+    for (const auto kv : _patternProperties) {
+        // TODO: should embed the actual key value here
+        ${capture(emit_validation_checks, "kv.second", variableDef) | indent8}
+    }
+% endif
+% endif
+}
+\
+<%doc>
+Helper routine for to_json()
+</%doc>\
+<%def name='emit_assignment(inst_name, json_path, var_def)'>\
 % if var_def.isVariant:
 class ${var_def.name}_to_json : public boost::static_visitor<Json>
 {
@@ -414,7 +398,7 @@ public:
                    [](const auto &val) {
                        return boost::apply_visitor(${var_def.name}_to_json(), val);
                    });
-    object["${var_def.json_name}"] = jsonArray;
+    object[${json_path}] = jsonArray;
 }
 % elif var_def.type.isEnum:
 {
@@ -425,31 +409,48 @@ public:
                    [](const auto &val) {
                        return ${var_def.type.enum_def.plain_name}_to_string(val);
                    });
-    object["${var_def.json_name}"] = enumStringArray;
+    object[${json_path}] = enumStringArray;
 }
 % else:
-object["${var_def.json_name}"] = Json(${inst_name});
+object[${json_path}] = Json(${inst_name});
 % endif
 % elif var_def.isVariant:
-object["${var_def.json_name}"] = boost::apply_visitor(${var_def.name}_to_json(), ${inst_name});
+object[${json_path}] = boost::apply_visitor(${var_def.name}_to_json(), ${inst_name});
 % elif var_def.type.isEnum:
-object["${var_def.json_name}"] = ${var_def.type.enum_def.plain_name}_to_string(${inst_name});
+object[${json_path}] = ${var_def.type.enum_def.plain_name}_to_string(${inst_name});
 % else:
-object["${var_def.json_name}"] = ${inst_name};
+object[${json_path}] = ${inst_name};
 % endif
 </%def>\
+\
+<%doc>
+to_json()
+</%doc>\
+Json ${class_name}::to_json() const {
+    ${assert_macro}(is_valid());
+    auto object = Json::object();
+% for v in classDef.variable_defs:
 % if v.isOptional:
-    if (${optional_inst_name}.is_initialized()) {
-        ${capture(emit_assignment, v) | indent8}
+    if (${v.name}.is_initialized()) {
+        ${capture(emit_assignment, v.name + ".get()", quote(v.json_name), v) | indent8}
 % if v.isNullable:
     } else {
         object["${v.json_name}"] = Json(nullptr);
 % endif
     }
 % else:
-    ${capture(emit_assignment, v) | indent4}
+    ${capture(emit_assignment, v.name, quote(v.json_name), v) | indent4}
 % endif
 % endfor
+% if classDef.has_pattern_properties:
+<%
+assert(len(classDef.pattern_properties) == 1)
+pattern, variableDef = classDef.pattern_properties[0]
+%>\
+    for (const auto kv : _patternProperties) {
+        ${capture(emit_assignment, "kv.second", "kv.first", variableDef) | indent8}
+    }
+% endif
     return Json(object);
 }
 % for v in classDef.variable_defs:

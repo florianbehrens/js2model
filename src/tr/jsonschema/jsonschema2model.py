@@ -335,6 +335,34 @@ class VariableDef(object):
         return {k: v for k, v in base_dict.items() if v != None}
 
     @property
+    def has_array_validation_checks(self):
+        return (self.minItems is not None or
+                self.maxItems is not None)
+
+    @property
+    def has_string_validation_checks(self):
+        return (self.minLength is not None or
+                self.maxLength is not None or
+                self.pattern is not None)
+
+    @property
+    def has_numeric_validation_checks(self):
+        return (self.minimum is not None or
+                self.maximum is not None)
+
+    @property
+    def has_object_validation_checks(self):
+        return self.type.schema_type == "object"
+
+    @property
+    def has_any_validation_checks(self):
+        return (self.has_array_validation_checks or
+                self.has_string_validation_checks or
+                self.has_numeric_validation_checks or
+                self.has_object_validation_checks or
+                self.isVariant)
+
+    @property
     def isOptional(self):
         return self.isNullable or not self.isRequired
 
