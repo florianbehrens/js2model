@@ -1,0 +1,52 @@
+[
+    {
+        "prop_builtinProperty": "hello",
+        "location": {
+        },
+        "phoneNumbers": {
+        }
+    },
+    {
+        "prop_builtinProperty": "hello",
+        "location": {
+            "loc_home": "not a real location"
+        },
+        "phoneNumbers": {
+        }
+    },
+    {
+        "prop_builtinProperty": "hello",
+        "location": {
+        },
+        "phoneNumbers": {
+            "number_x": []
+        }
+    },
+    {
+        "prop_builtinProperty": "hello",
+        "location": {
+            "locWork": "work"
+        },
+        "phoneNumbers": {
+        }
+    },
+    {
+        "prop_builtinProperty": "hello",
+        "location": {
+            "loc_one": "work",
+            "loc_2": "home",
+            "loc_   ???***": "home"
+        },
+        "phoneNumbers": {
+            "number_1": [{
+                "number": "(206)555-1212"
+            }],
+            "number_ more numbers": [{
+                "number": "(206)555-1213"
+            },{
+                "number": "(206)555-1214"
+            }
+            ]
+        }
+    }
+]

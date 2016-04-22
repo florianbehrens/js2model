@@ -1,0 +1,36 @@
+[
+    {
+        "description": {
+            "short_description": "is short",
+            "long_description": "is long"
+        }
+    },
+    {
+        "description": {
+            "short_description": "is short",
+            "long_description": "is long"
+        },
+        "anotherDescription": {
+            "short_description": "another is short",
+            "long_description": "another is long"
+        }
+    },
+    {
+        "description": {
+            "short_description": "is short",
+            "long_description": "is long"
+        },
+        "anotherDescription": {
+            "long_description": "another is long"
+        }
+    },
+    {
+        "description": {
+            "short_description": "is short",
+            "long_description": "is long"
+        },
+        "*** ??? !!! :)": {
+            "short_description": "is short"
+        }
+    }
+]

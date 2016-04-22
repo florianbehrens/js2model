@@ -125,6 +125,7 @@ class JsonSchemaKeywords(object):
     PROPERTIES = 'properties'
     EXTENDS = 'extends'
     ADDITIONAL_PROPERTIES = 'additionalProperties'
+    PATTERN_PROPERTIES = 'patternProperties'
     ONE_OF = 'oneOf'
 
     # Extended keywords
@@ -144,6 +145,7 @@ class ClassDef(object):
         # Class name
         self.name = None
         self.variable_defs = []
+        self.pattern_properties = []
         self.superClasses = []
         self.interfaces = []
         self.package = None
@@ -156,6 +158,7 @@ class ClassDef(object):
             'name': self.name,
             'plain_name': self.plain_name,
             'variable_defs': [x.to_dict() for x in self.variable_defs],
+            'pattern_properties': dict(self.pattern_properties),
             'superClasses': self.superClasses,
             'interfaces': self.interfaces,
             'package': self.package,
@@ -174,7 +177,7 @@ class ClassDef(object):
         # for dep in [ivar.type for ivar in self.variable_defs if ivar.schemaType == JsonSchemaTypes.OBJECT]:
         # dependencies.add(dep)
 
-        for var_def in self.variable_defs:
+        for var_def in self.variable_defs + [v for p,v in self.pattern_properties]:
             if var_def.type.header_file:
                 dependencies.add(var_def.type.header_file)
             if var_def.isVariant:
@@ -195,8 +198,18 @@ class ClassDef(object):
         return supertypes
 
     @property
+    def enum_defs(self):
+        enum_defs = [x.type.enum_def for x in self.variable_defs if x.type.enum_def]
+        enum_defs += [x.type.enum_def for p,x in self.pattern_properties if x.type.enum_def]
+        return enum_defs
+
+    @property
     def has_var_defaults(self):
         return True if len([d for d in self.variable_defs if d.default is not None]) else False
+
+    @property
+    def has_pattern_properties(self):
+        return len(self.pattern_properties) > 0
 
     @property
     def has_var_patterns(self):
@@ -322,6 +335,34 @@ class VariableDef(object):
         return {k: v for k, v in base_dict.items() if v != None}
 
     @property
+    def has_array_validation_checks(self):
+        return (self.minItems is not None or
+                self.maxItems is not None)
+
+    @property
+    def has_string_validation_checks(self):
+        return (self.minLength is not None or
+                self.maxLength is not None or
+                self.pattern is not None)
+
+    @property
+    def has_numeric_validation_checks(self):
+        return (self.minimum is not None or
+                self.maximum is not None)
+
+    @property
+    def has_object_validation_checks(self):
+        return self.type.schema_type == "object"
+
+    @property
+    def has_any_validation_checks(self):
+        return (self.has_array_validation_checks or
+                self.has_string_validation_checks or
+                self.has_numeric_validation_checks or
+                self.has_object_validation_checks or
+                self.isVariant)
+
+    @property
     def isOptional(self):
         return self.isNullable or not self.isRequired
 
@@ -415,7 +456,7 @@ class JsonSchema2Model(object):
     SCHEMA_URI = '__uri__'
 
     def __init__(self, outdir, include_files=None, super_classes=None, interfaces=None,
-                 include_additional_properties=False, assert_macro='assert',
+                 assert_macro='assert',
                  lang='objc', prefix='TR', namespace='tr', root_name=None, validate=True, verbose=False,
                  skip_deserialization=False, include_dependencies=True, template_manager=TemplateManager()):
 
@@ -425,7 +466,6 @@ class JsonSchema2Model(object):
         :param include_files:
         :param super_classes:
         :param interfaces:
-        :param include_additional_properties:
         :param assert_macro:
         :param lang:
         :param prefix:
@@ -439,7 +479,6 @@ class JsonSchema2Model(object):
         self.include_files = include_files
         self.super_classes = super_classes
         self.interfaces = interfaces
-        self.include_additional_properties = include_additional_properties
         self.assert_macro = assert_macro
         self.lang = lang
         self.prefix = prefix
@@ -469,8 +508,8 @@ class JsonSchema2Model(object):
         conventions = self.template_manager.get_conventions(self.lang)
 
         for classDef in self.models.values():
-            if len(classDef.variable_defs) == 0:
-                # print("Not emitting empty class %s" % classDef.name)
+            if len(classDef.variable_defs) == 0 and len(classDef.pattern_properties) == 0:
+                print("Not emitting empty class %s" % classDef.name)
                 continue
             # from pprint import pprint
             # pprint(classDef)
@@ -504,7 +543,6 @@ class JsonSchema2Model(object):
                                         include_files=self.include_files,
                                         assert_macro=self.assert_macro,
                                         namespace=self.namespace,
-                                        include_additional_properties=self.include_additional_properties,
                                         timestamp=str(datetime.date.today()),
                                         year=int(datetime.date.today().year),
                                         file_name=src_file_name,
@@ -531,8 +569,7 @@ class JsonSchema2Model(object):
                                              namespace=self.namespace,
                                              timestamp=str(datetime.date.today()),
                                              year=int(datetime.date.today().year),
-                                             file_name=src_file_name,
-                                             include_additional_properties=self.include_additional_properties))
+                                             file_name=src_file_name))
             except:
                 print(exceptions.text_error_template().render())
                 sys.exit(-1)
@@ -558,7 +595,6 @@ class JsonSchema2Model(object):
                                              timestamp=str(datetime.date.today()),
                                              year=int(datetime.date.today().year),
                                              namespace=self.namespace,
-                                             include_additional_properties=self.include_additional_properties,
                                              file_name=src_file_name))
             except:
                 print(exceptions.text_error_template().render())
@@ -673,24 +709,26 @@ class JsonSchema2Model(object):
 
                     scope.pop()
 
-            #
-            # support for additionalProperties
-            #
-            # include_additional_properties = self.include_additional_properties if not extended else False
+            # Pattern properties and additional properties. We parse the
+            # patternProperties declaration into an array of (regex, type)
+            # pairs. Additional properties are then appended to this array with
+            # a catchall regex (".*").
+            pattern_properties = list(schema_object.get(JsonSchemaKeywords.PATTERN_PROPERTIES, {}).items())
+            additional_properties = schema_object.get(JsonSchemaKeywords.ADDITIONAL_PROPERTIES, False)
+            if additional_properties:
+                pattern_properties.append(('.*', additional_properties))
+            for pattern, schema in pattern_properties:
+                # scope.append('pattern:%s' % pattern)
+                pattern_var_def = self.create_model(schema, scope)
+                pattern_var_def.isRequired = True
+                class_def.pattern_properties.append((pattern, pattern_var_def))
+                # scope.pop()
 
-            # if JsonSchemaKeywords.ADDITIONAL_PROPERTIES in schema_object:
-            #
-            #     additional_properties = schema_object[JsonSchemaKeywords.ADDITIONAL_PROPERTIES]
-            #
-            #     if type(additional_properties) is int and not additional_properties:
-            #         include_additional_properties = False
-            #     else:
-            #         include_additional_properties = True
-
-            # if include_additional_properties:
-            #     add_prop_var_def = VariableDef(JsonSchemaKeywords.ADDITIONAL_PROPERTIES)
-            #     add_prop_var_def.type = JsonSchemaTypes.DICT
-            #     class_def.variable_defs.append(add_prop_var_def)
+            # For simplicity, we only accept one patternProperties or additionalProperties
+            # directive in a class. Revisit if we find we need to change that.
+            if len(pattern_properties) > 1:
+                import json
+                raise ValueError('Only one patternProperties or additionalProperties directive may appear in a schema\n' + json.dumps(deepcopy(schema_object), indent=2))
 
             # add custom keywords
             class_def.custom = {k: v for k, v in schema_object.items() if k.startswith('#')}
