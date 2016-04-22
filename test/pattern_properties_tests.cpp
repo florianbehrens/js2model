@@ -56,6 +56,7 @@ TEST_CASE( "Pattern properties" ) {
         auto obj = PatternPropertiesTest(testData[3]);
         REQUIRE(obj.is_valid());
         REQUIRE(obj.location.to_json().dump() == "{}");
+        REQUIRE(obj.location.dynamic_properties().empty());
     }
 
     SECTION( "Pattern properties are accepted" ) {
@@ -70,6 +71,8 @@ TEST_CASE( "Pattern properties" ) {
         REQUIRE(obj.location["loc_one"] == PatternLocation::Location::Work);
         REQUIRE(obj.location["loc_2"] == PatternLocation::Location::Home);
         REQUIRE(obj.location["loc_   ???***"] == PatternLocation::Location::Home);
+
+        REQUIRE(obj.location.dynamic_properties().size() == 3);
     }
 
     SECTION( "get_property_or works correctly" ) {
