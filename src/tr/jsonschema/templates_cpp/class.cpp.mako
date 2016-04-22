@@ -343,13 +343,14 @@ check_valid()
 </%doc>\
 void ${class_name}::check_valid() const {
 % for v in classDef.variable_defs:
+<% member_variable = "this->" + v.name %>\
 % if v.has_any_validation_checks:
 % if v.isOptional:
-    if (${v.name}.is_initialized()) {
-        ${capture(emit_validation_checks, v.name + ".get()", v) | indent8}
+    if (${member_variable}.is_initialized()) {
+        ${capture(emit_validation_checks, member_variable + ".get()", v) | indent8}
     }
 % else:
-    ${capture(emit_validation_checks, v.name, v) | indent4}
+    ${capture(emit_validation_checks, member_variable, v) | indent4}
 % endif
 % endif
 % endfor
@@ -359,7 +360,7 @@ assert(len(classDef.pattern_properties) == 1)
 pattern, variableDef = classDef.pattern_properties[0]
 %>\
 % if variableDef.has_any_validation_checks:
-    for (const auto kv : _patternProperties) {
+    for (const auto kv : this->_patternProperties) {
         // TODO: should embed the actual key value here
         ${capture(emit_validation_checks, "kv.second", variableDef) | indent8}
     }
@@ -430,16 +431,17 @@ Json ${class_name}::to_json() const {
     ${assert_macro}(is_valid());
     auto object = Json::object();
 % for v in classDef.variable_defs:
+<% member_variable = "this->" + v.name %>\
 % if v.isOptional:
-    if (${v.name}.is_initialized()) {
-        ${capture(emit_assignment, v.name + ".get()", quote(v.json_name), v) | indent8}
+    if (${member_variable}.is_initialized()) {
+        ${capture(emit_assignment, member_variable + ".get()", quote(v.json_name), v) | indent8}
 % if v.isNullable:
     } else {
         object["${v.json_name}"] = Json(nullptr);
 % endif
     }
 % else:
-    ${capture(emit_assignment, v.name, quote(v.json_name), v) | indent4}
+    ${capture(emit_assignment, member_variable, quote(v.json_name), v) | indent4}
 % endif
 % endfor
 % if classDef.has_pattern_properties:
