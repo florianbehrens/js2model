@@ -137,6 +137,12 @@ acceptsAnyKey = (pattern == '.*')
 % endif
     const ${varType}& get_property_or(const std::string &key, const ${varType} &defaultValue) const;
 
+    // Get a const ref to the dynamic property map, for iteration.
+    // Writes still must go through operator[], so that property patterns can be validated.
+    const std::map<std::string, ${varType}>& dynamic_properties() const {
+        return _patternProperties;
+    }
+
 private:
     static bool is_intrinsic_key(const std::string &key);
     std::map<std::string, ${varType}> _patternProperties;
