@@ -1,8 +1,0 @@
-{
-	"type":"array",
-	"$schema": "http://json-schema.org/draft-04/schema",
-	"required":false,
-	"items": {
-		"$ref": "test-data.schema.json"
-	}
-}

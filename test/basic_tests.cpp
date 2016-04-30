@@ -1,5 +1,6 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
+#include "load_test_data.hpp"
 
 #include "Quickstart.h"
 
@@ -10,15 +11,7 @@ using namespace std;
 using namespace ft::js2model::test;
 
 TEST_CASE( "JSON data can be loaded into classes" ) {
-    ifstream data("jsonData/quickstart.data.json");
-    stringstream buffer;
-    buffer << data.rdbuf();
-    string error;
-    auto json = Json::parse(buffer.str(), error);
-    if (!error.empty()) {
-        cerr << "Error loading input data: " << error << endl;
-        exit(-1);
-    }
+    auto json = LoadTestData("jsonData/quickstart.data.json");
     REQUIRE(json.is_array());
 
     SECTION( "invalid JSON triggers assertion" ) {
@@ -65,12 +58,7 @@ TEST_CASE( "JSON data can be loaded into classes" ) {
 }
 
 TEST_CASE( "JSON data can be dumped out from classes" ) {
-    ifstream data("jsonData/quickstart.data.json");
-    stringstream buffer;
-    buffer << data.rdbuf();
-    string error;
-    auto json = Json::parse(buffer.str(), error);
-    REQUIRE(error.empty());
+    auto json = LoadTestData("jsonData/quickstart.data.json");
     REQUIRE(json.is_array());
 
     SECTION( "minimal valid JSON can be reconstructed correctly" ) {

@@ -1,7 +1,5 @@
-#include <iostream>
-#include <fstream>
-
 #include "catch.hpp"
+#include "load_test_data.hpp"
 #include "optional_io.hpp"
 
 #include "AdditionalPropertiesTest.h"
@@ -12,21 +10,8 @@ using namespace std;
 
 using namespace ft::js2model::test;
 
-static Json LoadTestData() {
-    ifstream data("jsonData/additional-properties-test.data.json");
-    stringstream buffer;
-    buffer << data.rdbuf();
-    string error;
-    auto testData = Json::parse(buffer.str(), error);
-    if (!error.empty()) {
-        cerr << "Error loading input data: " << error << endl;
-        exit(-1);
-    }
-    return testData;
-}
-
 TEST_CASE( "Additional properties" ) {
-    auto testData = LoadTestData();
+    auto testData = LoadTestData("jsonData/additional-properties-test.data.json");
 
     SECTION( "No additional properties are required" ) {
         auto obj = AdditionalPropertiesTest(testData[0]);

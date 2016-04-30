@@ -1,5 +1,7 @@
 #include "catch.hpp"
+#include "load_test_data.hpp"
 
+#include "Emoji.h"
 #include "Validation.h"
 
 using namespace boost;
@@ -50,7 +52,37 @@ TEST_CASE( "String validation" ) {
     }
 }
 
- TEST_CASE( "Integer validation" ) {
+TEST_CASE( "Unicode string validation" ) {
+
+    auto testData = LoadTestData("jsonData/emoji-test.data.json");
+
+    // The Emoji schema enforces a string length of 1.  We want that string
+    // length to be interpreted as code point count. This test case verifies
+    // that UTF-8 sequences from 1 byte to 4 are interpreted as a single code
+    // point.
+
+    SECTION( "Standard character - 1 UTF-8 byte" ) {
+        auto e = Emoji(testData[0]);
+        REQUIRE(e.is_valid());
+    }
+
+    SECTION( "Accented character - 2 UTF-8 bytes" ) {
+        auto e = Emoji(testData[1]);
+        REQUIRE(e.is_valid());
+    }
+
+    SECTION( "Astral plane character - 3 UTF-8 bytes" ) {
+        auto e = Emoji(testData[2]);
+        REQUIRE(e.is_valid());
+    }
+
+    SECTION( "Emoji character - 4 UTF-8 bytes" ) {
+        auto e = Emoji(testData[3]);
+        REQUIRE(e.is_valid());
+    }
+}
+
+TEST_CASE( "Integer validation" ) {
      SECTION( "Minimum" ) {
          auto v = Validation();
 

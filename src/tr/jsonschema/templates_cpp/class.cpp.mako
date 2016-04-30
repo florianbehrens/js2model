@@ -121,19 +121,22 @@ ${generateBasicAssignmentFromJson(variableDef, lhs, rhs, lhsIsArray)}
 String validation
 </%doc>
 <%def name='emit_string_validation_checks(inst_name, var_def)'>\
+{
+    auto codepoint_count = ::js2model::utf8_codepoint_count(${inst_name});
 % if var_def.minLength is not None:
-if (${inst_name}.size() < ${var_def.minLength})
-    throw out_of_range("${var_def.name} too short");
+    if (codepoint_count < ${var_def.minLength})
+        throw out_of_range("${var_def.name} too short");
 % endif
 % if var_def.maxLength is not None:
-if (${inst_name}.size() > ${var_def.maxLength})
-    throw out_of_range("${var_def.name} too long");
+    if (codepoint_count > ${var_def.maxLength})
+        throw out_of_range("${var_def.name} too long");
 % endif
 % if var_def.pattern:
-auto ${var_def.name}_regex = regex(R"_(${var_def.pattern})_", regex_constants::ECMAScript);
-if (!regex_match(${inst_name}, ${var_def.name}_regex))
-    throw invalid_argument("${var_def.name} doesn't match regex pattern");
+    auto ${var_def.name}_regex = regex(R"_(${var_def.pattern})_", regex_constants::ECMAScript);
+    if (!regex_match(${inst_name}, ${var_def.name}_regex))
+        throw invalid_argument("${var_def.name} doesn't match regex pattern");
 % endif
+}
 </%def>\
 
 <%doc>
@@ -245,6 +248,8 @@ This block contains the generated code
 #include <unordered_set>
 % endif
 #include <vector>
+
+#include "UTF8Utils.h"
 
 using namespace std;
 using namespace json11;
