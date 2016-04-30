@@ -1,0 +1,16 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "typeName": "Emoji",
+    "required": [
+        "emoji"
+    ],
+    "properties": {
+        "emoji": {
+            "type": "string",
+            "minLength": "1",
+            "maxLength": "1"
+        }
+    }
+}
+
