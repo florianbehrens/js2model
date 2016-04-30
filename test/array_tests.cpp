@@ -1,7 +1,5 @@
-#include <iostream>
-#include <fstream>
-
 #include "catch.hpp"
+#include "load_test_data.hpp"
 
 #include "ArrayTest.h"
 
@@ -11,21 +9,9 @@ using namespace std;
 
 using namespace ft::js2model::test;
 
-static Json LoadTestData() {
-    ifstream data("jsonData/array-test.data.json");
-    stringstream buffer;
-    buffer << data.rdbuf();
-    string error;
-    auto testData = Json::parse(buffer.str(), error);
-    if (!error.empty()) {
-        cerr << "Error loading input data: " << error << endl;
-        exit(-1);
-    }
-    return testData;
-}
+static auto testData = LoadTestData("jsonData/array-test.data.json");
 
 TEST_CASE( "Array serialization" ) {
-    auto testData = LoadTestData();
 
     SECTION( "Required arrays must be present" ) {
         REQUIRE_THROWS_AS(auto obj = ArrayTest(testData[0]), AssertFailedError);
@@ -57,7 +43,6 @@ TEST_CASE( "Array serialization" ) {
 }
 
 TEST_CASE( "Array type support" ) {
-    auto testData = LoadTestData();
 
     SECTION( "Bool" ) {
         auto data = testData[5];

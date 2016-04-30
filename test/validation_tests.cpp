@@ -1,7 +1,5 @@
-#include <iostream>
-#include <fstream>
-
 #include "catch.hpp"
+#include "load_test_data.hpp"
 
 #include "Emoji.h"
 #include "Validation.h"
@@ -54,22 +52,9 @@ TEST_CASE( "String validation" ) {
     }
 }
 
-static Json LoadEmojiTestData() {
-    ifstream data("jsonData/emoji-test.data.json");
-    stringstream buffer;
-    buffer << data.rdbuf();
-    string error;
-    auto testData = Json::parse(buffer.str(), error);
-    if (!error.empty()) {
-        cerr << "Error loading input data: " << error << endl;
-        exit(-1);
-    }
-    return testData;
-}
-
 TEST_CASE( "Unicode string validation" ) {
 
-    auto testData = LoadEmojiTestData();
+    auto testData = LoadTestData("jsonData/emoji-test.data.json");
 
     // The Emoji schema enforces a string length of 1.  We want that string
     // length to be interpreted as code point count. This test case verifies
