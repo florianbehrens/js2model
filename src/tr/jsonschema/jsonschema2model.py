@@ -215,6 +215,12 @@ class ClassDef(object):
     def has_var_patterns(self):
         return True if len([d for d in self.variable_defs if d.pattern is not None]) else False
 
+    @property
+    def has_string_length_checks(self):
+        for v in self.variable_defs:
+            if v.minLength is not None or v.maxLength is not None:
+                return True
+        return False
 
 class EnumDef(object):
     def __init__(self):
