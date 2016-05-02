@@ -1005,7 +1005,7 @@ class JsonSchema2Model(object):
                 base_uri = 'file://' + os.path.realpath(fname)
                 root_schema = jsonref.load(jsonFile,
                                            base_uri=base_uri,
-                                           jsonschema=True,
+                                           jsonschema=False, # resolve references relative to local tree, not against "id" URIs
                                            loader=loader,
                                            object_pairs_hook=collections.OrderedDict
                                            )
