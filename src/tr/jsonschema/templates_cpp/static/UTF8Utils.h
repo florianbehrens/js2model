@@ -1,3 +1,10 @@
+//
+//  UTF8Utils.h
+//
+//  Copyright (c) 2016 FiftyThree, Inc. All rights reserved.
+//
+//  clang-format off
+
 #pragma once
 
 #include <string>

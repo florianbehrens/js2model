@@ -1,3 +1,10 @@
+//
+//  UTF8Utils.cpp
+//
+//  Copyright (c) 2016 FiftyThree, Inc. All rights reserved.
+//
+//  clang-format off
+
 #include "UTF8Utils.h"
 
 using namespace std;
