@@ -20,6 +20,42 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+try:
+    import jsonref
+except ImportError:
+    print
+    print 'Could not import "jsonref" library.'
+    print 'For installation instructions, see: https://github.com/ahupp/python-magic'
+    print 'ie.'
+    print 'brew install python'
+    print 'pip install jsonref'
+    print
+    sys.exit(1)
+
+try:
+    import mako
+except ImportError:
+    print
+    print 'Could not import "mako" library.'
+    print 'For installation instructions, see: https://github.com/ahupp/python-magic'
+    print 'ie.'
+    print 'brew install python'
+    print 'pip install mako'
+    print
+    sys.exit(1)
+
+try:
+    import jsonschema
+except ImportError:
+    print
+    print 'Could not import "jsonschema" library.'
+    print 'For installation instructions, see: https://github.com/ahupp/python-magic'
+    print 'ie.'
+    print 'brew install python'
+    print 'pip install jsonschema'
+    print
+    sys.exit(1)
+
 import js2model
 
 from js2model import main
