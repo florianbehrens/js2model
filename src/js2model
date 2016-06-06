@@ -20,6 +20,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import importlib
+import sys
+
+def safe_import(module):
+    try:
+        return importlib.import_module(module) 
+    except ImportError:
+        print
+        print 'Could not import "' + module + '" library.'
+        print 'For installation instructions, see: https://github.com/ahupp/python-magic'
+        print 'ie.'
+        print 'brew install python'
+        print 'pip install ' + module
+        print
+        sys.exit(1)
+
+safe_import("jsonref")
+safe_import("mako")
+safe_import("jsonschema")
+
 import js2model
 
 from js2model import main
