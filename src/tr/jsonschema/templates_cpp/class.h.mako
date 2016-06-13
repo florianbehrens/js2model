@@ -77,8 +77,6 @@ class ${class_name + ((' : public ' + superClass) if superClass else '')}
 public:
     ALIAS_PTR_TYPES(${class_name});
 
-    ~${class_name}() {}
-
 % for e in classDef.enum_defs:
 ${enumDecl(e)}
 % endfor
