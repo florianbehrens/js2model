@@ -724,13 +724,11 @@ class JsonSchema2Model(object):
             # in the "allOf".
             if JsonSchemaKeywords.ALL_OF in schema_object:
 
-                allOfs = schema_object[JsonSchemaKeywords.ALL_OF]
-                for allOf in allOfs:
-	                
-	                if JsonSchemaKeywords.PROPERTIES in allOf:
-
-	                    properties = allOf[JsonSchemaKeywords.PROPERTIES]
-	                    required_properties = allOf.get(JsonSchemaKeywords.REQUIRED, {})
+                sub_schemas = schema_object[JsonSchemaKeywords.ALL_OF]
+                for sub_schema in sub_schemas:	                
+	                if JsonSchemaKeywords.PROPERTIES in sub_schema:
+	                    properties = sub_schema[JsonSchemaKeywords.PROPERTIES]
+	                    required_properties = sub_schema.get(JsonSchemaKeywords.REQUIRED, {})
 
 	                    for prop in properties.keys():
 	                        scope.append(prop)
