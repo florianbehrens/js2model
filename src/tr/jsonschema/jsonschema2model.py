@@ -127,6 +127,7 @@ class JsonSchemaKeywords(object):
     ADDITIONAL_PROPERTIES = 'additionalProperties'
     PATTERN_PROPERTIES = 'patternProperties'
     ONE_OF = 'oneOf'
+    ALL_OF = 'allOf'
 
     # Extended keywords
     SUPERCLASS = '#superclass'
@@ -714,6 +715,29 @@ class JsonSchema2Model(object):
                     class_def.variable_defs.append(prop_var_def)
 
                     scope.pop()
+            
+            # js2model doesn't support the "allOf" keyword.
+            # https://spacetelescope.github.io/understanding-json-schema/reference/combining.html#allof
+            # 
+            # This adds in the most minimal support for "allOf".  
+            # We extract and honor the "properties" and "required" keys of each item
+            # in the "allOf".
+            if JsonSchemaKeywords.ALL_OF in schema_object:
+
+                sub_schemas = schema_object[JsonSchemaKeywords.ALL_OF]
+                for sub_schema in sub_schemas:	                
+	                if JsonSchemaKeywords.PROPERTIES in sub_schema:
+	                    properties = sub_schema[JsonSchemaKeywords.PROPERTIES]
+	                    required_properties = sub_schema.get(JsonSchemaKeywords.REQUIRED, {})
+
+	                    for prop in properties.keys():
+	                        scope.append(prop)
+
+	                        prop_var_def = self.create_model(properties[prop], scope)
+	                        prop_var_def.isRequired = prop_var_def.json_name in required_properties
+	                        class_def.variable_defs.append(prop_var_def)
+
+	                        scope.pop()
 
             # Pattern properties and additional properties. We parse the
             # patternProperties declaration into an array of (regex, type)
