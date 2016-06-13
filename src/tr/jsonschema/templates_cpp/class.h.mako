@@ -77,8 +77,6 @@ class ${class_name + ((' : public ' + superClass) if superClass else '')}
 public:
     ALIAS_PTR_TYPES(${class_name});
 
-    // TODO: We should eventually make the destructor private to ensure we
-    //       only allocate instances of this class using std::make_shared().
     ~${class_name}() {}
 
 % for e in classDef.enum_defs:
@@ -153,6 +151,12 @@ private:
     static bool is_intrinsic_key(const std::string &key);
     std::map<std::string, ${varType}> _patternProperties;
 % endif
+
+public:
+    static Ptr New(const json11::Json &value)
+    {
+        return std::make_shared<${class_name}>(value);
+    }
 }; // class ${class_name}
 
 % for ns in reversed(namespace.split('::')):
