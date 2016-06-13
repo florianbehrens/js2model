@@ -153,10 +153,10 @@ private:
 % endif
 
 public:
-	static Ptr New(const json11::Json &value)
-	{
-		return std::make_shared<${class_name}>(value);
-	}
+    static Ptr New(const json11::Json &value)
+    {
+        return std::make_shared<${class_name}>(value);
+    }
 }; // class ${class_name}
 
 % for ns in reversed(namespace.split('::')):
