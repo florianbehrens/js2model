@@ -101,6 +101,8 @@ public:
 
     /// Returns true if the contents of this object match the schema
     bool is_valid() const;
+    /// Returns a non-empty string if the contents of this object do not match the schema
+    std::string get_validity_error() const;
     /// Throws if the contents of this object do not match the schema
     void check_valid() const;
 
