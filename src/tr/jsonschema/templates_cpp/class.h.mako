@@ -64,6 +64,11 @@ has_variants = any([v.isVariant for v in classDef.variable_defs])
 #include "${include_file}"
 % endfor
 % endif
+% if classDef.superClasses:
+% for superClass in classDef.superClasses:
+#include "SyncClient/${superClass}.h"
+% endfor
+% endif
 
 % for ns in namespace.split('::'):
 namespace ${ns} {

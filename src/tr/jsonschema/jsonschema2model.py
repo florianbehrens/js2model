@@ -521,6 +521,12 @@ class JsonSchema2Model(object):
             # from pprint import pprint
             # pprint(classDef)
             # import pdb; pdb.set_trace()
+            
+            if template_files.header_template:
+				print('render_model_to_file', classDef.header_file, template_files.header_template)
+				print('\t classDef.superClasses', classDef.superClasses)
+# 				sys.exit(0)
+            	
             if template_files.header_template:
                 self.render_model_to_file(classDef, classDef.header_file, template_files.header_template)
 
@@ -686,6 +692,13 @@ class JsonSchema2Model(object):
 
             # set super class, in increasing precendence
             extended = False
+            if 'superclass' in schema_object:
+            	superclass_name = schema_object['superclass']
+            	print('superclass_name', superclass_name)
+            	print('superclass_name', type(superclass_name))
+            	assert (isinstance(superclass_name, str) or isinstance(superclass_name, unicode))
+            	class_def.superClasses = [superclass_name]
+            	pass
             if JsonSchemaKeywords.EXTENDS in schema_object:
                 prop_var_def = self.create_model(schema_object[JsonSchemaKeywords.EXTENDS], scope)
                 class_def.superClasses = [prop_var_def.type.name]
