@@ -80,7 +80,7 @@ superClass = classDef.superClasses[0] if len(classDef.superClasses) else None
 class ${class_name + ((' : public ' + superClass) if superClass else '')}
 {
 public:
-    ALIAS_PTR_TYPES(${class_name});
+    using Ptr = std::shared_ptr<${class_name}>;
 
 % for e in classDef.enum_defs:
 ${enumDecl(e)}
