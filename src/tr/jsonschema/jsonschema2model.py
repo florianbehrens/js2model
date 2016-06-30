@@ -513,7 +513,8 @@ class JsonSchema2Model(object):
 
         template_files = self.template_manager.get_template_files(self.lang)
         conventions = self.template_manager.get_conventions(self.lang)
-
+		
+        translator_class_names = []
         for classDef in self.models.values():
             if len(classDef.variable_defs) == 0 and len(classDef.pattern_properties) == 0:
                 print("Not emitting empty class %s" % classDef.name)
@@ -521,6 +522,11 @@ class JsonSchema2Model(object):
             # from pprint import pprint
             # pprint(classDef)
             # import pdb; pdb.set_trace()
+            
+            isMessageType = classDef.superClasses
+            if isMessageType:
+                translator_class_names.append(classDef.name)
+            	
             if template_files.header_template:
                 self.render_model_to_file(classDef, classDef.header_file, template_files.header_template)
 
@@ -535,6 +541,32 @@ class JsonSchema2Model(object):
         # The `models.h` file is just noise
         # for global_template in template_files.global_templates:
         #     self.render_global_template(self.models.values(), global_template)
+        
+        translator_file_name = 'GenericMessageTranslator.h'
+        translator_template = 'translator.h.mako'
+        self.render_translation_to_file(translator_class_names, translator_file_name, translator_template)
+		
+    def render_translation_to_file(self, class_names, src_file_name, templ_name):
+ 
+        outfile_name = os.path.join(self.outdir, src_file_name)
+
+        template = self.makolookup.get_template(templ_name)
+
+        with open(outfile_name, 'w') as f:
+
+            try:
+                self.verbose_output("Writing %s" % outfile_name)
+                f.write(template.render(class_names=class_names,
+                                        include_files=self.include_files,
+                                        assert_macro=self.assert_macro,
+                                        namespace=self.namespace,
+                                        timestamp=str(datetime.date.today()),
+                                        year=int(datetime.date.today().year),
+                                        file_name=src_file_name,
+                                        skip_deserialization=self.skip_deserialization))
+            except:
+                print(exceptions.text_error_template().render())
+                sys.exit(-1)
 
     def render_model_to_file(self, class_def, src_file_name, templ_name):
 
@@ -686,6 +718,11 @@ class JsonSchema2Model(object):
 
             # set super class, in increasing precendence
             extended = False
+            if 'superclass' in schema_object:
+            	superclass_name = schema_object['superclass']
+            	assert (isinstance(superclass_name, str) or isinstance(superclass_name, unicode))
+            	class_def.superClasses = [superclass_name]
+
             if JsonSchemaKeywords.EXTENDS in schema_object:
                 prop_var_def = self.create_model(schema_object[JsonSchemaKeywords.EXTENDS], scope)
                 class_def.superClasses = [prop_var_def.type.name]

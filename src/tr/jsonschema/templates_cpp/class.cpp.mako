@@ -346,6 +346,18 @@ bool ${class_name}::is_valid() const {
 }
 
 <%doc>
+is_valid()
+</%doc>\
+std::string ${class_name}::get_validity_error() const {
+    try {
+        check_valid();
+    } catch (const exception &e) {
+        return e.what();
+    }
+    return "";
+}
+
+<%doc>
 check_valid()
 </%doc>\
 void ${class_name}::check_valid() const {

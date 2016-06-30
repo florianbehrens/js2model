@@ -64,6 +64,11 @@ has_variants = any([v.isVariant for v in classDef.variable_defs])
 #include "${include_file}"
 % endfor
 % endif
+% if classDef.superClasses:
+% for superClass in classDef.superClasses:
+#include "SyncClient/${superClass}.h"
+% endfor
+% endif
 
 % for ns in namespace.split('::'):
 namespace ${ns} {
@@ -75,7 +80,7 @@ superClass = classDef.superClasses[0] if len(classDef.superClasses) else None
 class ${class_name + ((' : public ' + superClass) if superClass else '')}
 {
 public:
-    ALIAS_PTR_TYPES(${class_name});
+    using Ptr = std::shared_ptr<${class_name}>;
 
 % for e in classDef.enum_defs:
 ${enumDecl(e)}
@@ -101,6 +106,8 @@ public:
 
     /// Returns true if the contents of this object match the schema
     bool is_valid() const;
+    /// Returns a non-empty string if the contents of this object do not match the schema
+    std::string get_validity_error() const;
     /// Throws if the contents of this object do not match the schema
     void check_valid() const;
 
