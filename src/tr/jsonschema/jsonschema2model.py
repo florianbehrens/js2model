@@ -722,7 +722,7 @@ class JsonSchema2Model(object):
             	superclass_name = schema_object['superclass']
             	assert (isinstance(superclass_name, str) or isinstance(superclass_name, unicode))
             	class_def.superClasses = [superclass_name]
-            	pass
+
             if JsonSchemaKeywords.EXTENDS in schema_object:
                 prop_var_def = self.create_model(schema_object[JsonSchemaKeywords.EXTENDS], scope)
                 class_def.superClasses = [prop_var_def.type.name]

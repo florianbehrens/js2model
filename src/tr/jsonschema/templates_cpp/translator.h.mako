@@ -39,7 +39,7 @@ public:
 
 // This class is intended to eventually supercede SyncEngineMessageTranslator.
 //
-// Its contents will eventually be code-generated from the JSON schemas.
+// Its contents are code-generated from the JSON schemas.
 class GenericMessageTranslator
 {
 private:
