@@ -43,7 +43,7 @@ Clone the repository from github, install the dependencies, then run the setup.p
 ::
 
         $ git clone git@github.com:thomsonreuters/js2model.git
-        $ cd js2model
+        $ cd js2model/src
         $ pip install -r requirements.txt
         $ python setup.py install
 
